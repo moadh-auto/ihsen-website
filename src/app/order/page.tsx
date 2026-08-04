@@ -1,5 +1,5 @@
 'use client';
-import { useEffect, useState } from 'react';
+import { Suspense, useEffect, useState } from 'react';
 import { useSearchParams, useRouter } from 'next/navigation';
 import Image from 'next/image';
 import { FEATURED_PRODUCTS, validatePromo, calcDiscount, type PromoCode } from '@/lib/constants';
@@ -19,7 +19,7 @@ interface DeliveryCompany {
   prices: Record<string, WilayaPrice>;
 }
 
-export default function OrderPage() {
+function OrderContent() {
   const searchParams = useSearchParams();
   const router = useRouter();
 
@@ -1362,6 +1362,14 @@ export default function OrderPage() {
         </div>
       </div>
     </div>
+  );
+}
+
+export default function OrderPage() {
+  return (
+    <Suspense fallback={<div style={{ minHeight: '100vh', background: '#F9F6F1' }} />}>
+      <OrderContent />
+    </Suspense>
   );
 }
 
