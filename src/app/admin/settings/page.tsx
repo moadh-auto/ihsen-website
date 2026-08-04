@@ -249,7 +249,8 @@ export default function SettingsPage() {
     // Also persist to Supabase so it survives clearing localStorage
     const ok = await saveSetting('admin_lang', defaultLang);
     setLangSaving(false);
-    showToast(ok ? (isAdminAr ? `تم تعيين لغة لوحة التحكم: ${defaultLang === 'ar' ? 'العربية' : 'Français'}` : `Langue définie : ${defaultLang === 'ar' ? 'العربية' : 'Français'}`) : (isAdminAr ? 'تعذر الحفظ' : 'Échec de l\'enregistrement'), ok);
+    const langLabel = (defaultLang as string) === 'ar' ? 'العربية' : 'Français';
+    showToast(ok ? (isAdminAr ? `تم تعيين لغة لوحة التحكم: ${langLabel}` : `Langue définie : ${langLabel}`) : (isAdminAr ? 'تعذر الحفظ' : 'Échec de l\'enregistrement'), ok);
   };
 
   // ── Sidebar ────────────────────────────────────────────────────────────────

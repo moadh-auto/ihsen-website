@@ -237,7 +237,7 @@ function OrdersContent() {
       const setCell = (ws: ReturnType<typeof xlsx.utils.aoa_to_sheet>, r: number, c: number, v: unknown, s?: Record<string, unknown>) => {
         const ref = xlsx.utils.encode_cell({ r, c });
         if (!ws[ref]) ws[ref] = { v, t: typeof v === 'number' ? 'n' : 's' };
-        else ws[ref].v = v;
+        else (ws[ref] as Record<string, unknown>).v = v;
         if (s) (ws[ref] as Record<string, unknown>).s = s;
       };
 

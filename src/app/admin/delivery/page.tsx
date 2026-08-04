@@ -325,7 +325,7 @@ export default function DeliveryPage() {
             {([{k:'name' as const,l:isAdminAr?'اسم الشركة':'Nom',p:'Yalidine, Lex...'},{k:'phone' as const,l:isAdminAr?'رقم الهاتف':'Téléphone',p:'0550 000 000'}]).map(({k,l,p})=>(
               <div key={k}>
                 <label style={{ fontSize:11, color:C.muted, display:'block', marginBottom:5, fontFamily:font }}>{l}</label>
-                <input value={(editComp as Record<string,string>)[k]} placeholder={p}
+                <input value={(editComp as unknown as Record<string,string>)[k]} placeholder={p}
                   onChange={e=>setEditComp(ec=>ec?{...ec,[k]:e.target.value}:ec)}
                   style={{ width:'100%', padding:'9px 12px', borderRadius:9, border:`1.5px solid ${C.border}`, fontFamily:font, fontSize:13, color:C.text, outline:'none', boxSizing:'border-box' as const }} />
               </div>

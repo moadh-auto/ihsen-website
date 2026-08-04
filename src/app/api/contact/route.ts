@@ -50,7 +50,8 @@ export async function POST(req: NextRequest) {
   }
 
   // ── 3. Sanitize ───────────────────────────────────────────────────────────
-  const fields = sanitizeContact(raw as Record<string, unknown>);
+  const r = raw as Record<string, unknown>;
+  const fields = sanitizeContact({ name: r.name, phone: r.phone, message: r.message });
 
   // ── 4. Validate ───────────────────────────────────────────────────────────
   const validErr = validateContact(fields);
