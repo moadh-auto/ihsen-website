@@ -221,8 +221,10 @@ export default function DeliveryPage() {
     if (!file || !editComp) return;
     const reader = new FileReader();
     reader.onload = async ev => {
+      const result = ev.target?.result;
+      if (result === undefined || result === null) return;
       const XLSX = await import('xlsx-js-style');
-      const wb = XLSX.read(ev.target?.result, { type:'binary' });
+      const wb = XLSX.read(result, { type:'binary' });
       const ws = wb.Sheets[wb.SheetNames[0]];
       const rows = XLSX.utils.sheet_to_json<Record<string,unknown>>(ws);
       const prices = { ...comp.prices };
