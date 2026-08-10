@@ -163,11 +163,18 @@ export default function SettingsPage() {
     if (newPw.length < 6) { showToast(isAdminAr ? 'كلمة المرور الجديدة يجب أن تكون 6 أحرف على الأقل' : 'Le mot de passe doit contenir au moins 6 caractères', false); return; }
     if (newPw !== confPw)  { showToast(isAdminAr ? 'كلمتا المرور غير متطابقتين' : 'Les mots de passe ne correspondent pas', false); return; }
     setPwSaving(true);
-    localStorage.setItem('ihsen_custom_pw', newPw);
-    await saveSetting('admin_password_hint', 'custom'); // mark as customized
+    
+    const { error } = await supabase.auth.updateUser({ password: newPw });
+    
     setPwSaving(false);
-    setNewPw(''); setConfPw('');
-    showToast(isAdminAr ? 'تم تغيير كلمة المرور بنجاح' : 'Mot de passe modifié avec succès');
+    
+    if (error) {
+      showToast(isAdminAr ? 'فشل تغيير كلمة المرور' : 'Échec de la modification du mot de passe', false);
+    } else {
+      localStorage.removeItem('ihsen_custom_pw'); // Clean up old system
+      setNewPw(''); setConfPw('');
+      showToast(isAdminAr ? 'تم تغيير كلمة المرور بنجاح' : 'Mot de passe modifié avec succès');
+    }
   };
 
   // ── Categories ─────────────────────────────────────────────────────────────
