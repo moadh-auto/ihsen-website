@@ -258,7 +258,7 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
                 </>
               )}
             </div>
-            <button onClick={() => { sessionStorage.removeItem('ihsen_admin'); router.replace('/admin'); }} style={{ padding:isMobileTablet?'0 8px':'0 12px', height:36, borderRadius:10, background:'#EF444410', border:'1px solid #EF444425', color:'#EF4444', fontSize:12, fontWeight:700, cursor:'pointer', fontFamily:font, transition:'all 0.2s', display:'flex', alignItems:'center', gap:isMobileTablet?0:6 }}
+            <button onClick={async () => { sessionStorage.removeItem('ihsen_admin'); await supabase.auth.signOut(); router.replace('/admin'); }} style={{ padding:isMobileTablet?'0 8px':'0 12px', height:36, borderRadius:10, background:'#EF444410', border:'1px solid #EF444425', color:'#EF4444', fontSize:12, fontWeight:700, cursor:'pointer', fontFamily:font, transition:'all 0.2s', display:'flex', alignItems:'center', gap:isMobileTablet?0:6 }}
               onMouseEnter={e => e.currentTarget.style.background = '#EF444420'}
               onMouseLeave={e => e.currentTarget.style.background = '#EF444410'}>
               <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" style={{ transform:isAdminAr?'rotate(180deg)':'none' }}><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"></path><polyline points="16 17 21 12 16 7"></polyline><line x1="21" y1="12" x2="9" y2="12"></line></svg>

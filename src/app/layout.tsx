@@ -4,6 +4,7 @@ import { CartProvider } from "@/context/CartContext";
 import CartDrawer from "@/components/CartDrawer";
 import CartFAB from "@/components/CartFAB";
 import RevealObserver from "@/components/RevealObserver";
+import NetworkStatus from "@/components/NetworkStatus";
 
 export const metadata: Metadata = {
   title: "إحسان — Ihsen | أزياء محتشمة راقية",
@@ -41,6 +42,7 @@ export default function RootLayout({
           {children}
           <CartDrawer />
           <CartFAB />
+          <NetworkStatus />
         </CartProvider>
       </body>
     </html>

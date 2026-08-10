@@ -71,16 +71,16 @@ alter table promo_codes enable row level security;
 create policy "insert_orders" on orders for insert with check (true);
 -- Allow the app to read orders
 create policy "read_own_order" on orders for select using (true);
--- Allow the app to update order status (admin panel uses anon key)
-create policy "update_orders" on orders for update using (true);
+-- Allow the app to update order status (admin panel uses authenticated role)
+create policy "update_orders" on orders for update using (auth.role() = 'authenticated');
 -- Allow the app to read active promo codes for validation
 create policy "read_promos" on promo_codes for select using (active = true);
 -- Allow the app to read all promo codes (admin panel needs inactive ones too)
-create policy "admin_read_promos" on promo_codes for select using (true);
+create policy "admin_read_promos" on promo_codes for select using (auth.role() = 'authenticated');
 -- Allow the app to insert/update/delete promo codes (admin panel)
-create policy "admin_write_promos" on promo_codes for insert with check (true);
-create policy "admin_update_promos" on promo_codes for update using (true);
-create policy "admin_delete_promos" on promo_codes for delete using (true);
+create policy "admin_write_promos" on promo_codes for insert with check (auth.role() = 'authenticated');
+create policy "admin_update_promos" on promo_codes for update using (auth.role() = 'authenticated');
+create policy "admin_delete_promos" on promo_codes for delete using (auth.role() = 'authenticated');
 
 -- Indexes for performance
 create index if not exists orders_order_num_idx on orders (order_num);

@@ -3,13 +3,7 @@ import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import Image from 'next/image';
 
-const ADMIN_PASSWORD_DEFAULT = 'ihsen2026';
-const getAdminPassword = () => {
-  if (typeof window !== 'undefined') {
-    return localStorage.getItem('ihsen_custom_pw') ?? ADMIN_PASSWORD_DEFAULT;
-  }
-  return ADMIN_PASSWORD_DEFAULT;
-};
+import { supabase } from '@/lib/supabase';
 
 export default function AdminLogin() {
   const router  = useRouter();
@@ -30,12 +24,17 @@ export default function AdminLogin() {
     e.preventDefault();
     setLoading(true);
     setError('');
-    await new Promise(r => setTimeout(r, 600));
-    if (pw === getAdminPassword()) {
+    
+    const { error: authError } = await supabase.auth.signInWithPassword({
+      email: 'admin@ihsen.store',
+      password: pw
+    });
+
+    if (!authError) {
       sessionStorage.setItem('ihsen_admin', '1');
       router.push('/admin/dashboard');
     } else {
-      setError('كلمة المرور غير صحيحة');
+      setError('كلمة المرور غير صحيحة أو الحساب غير موجود');
       setLoading(false);
     }
   };

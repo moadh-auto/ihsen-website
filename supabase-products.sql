@@ -31,9 +31,14 @@ drop policy if exists "admin_upd_products"  on products;
 drop policy if exists "admin_del_products"  on products;
 
 create policy "read_products"      on products for select using (true);
-create policy "admin_ins_products" on products for insert with check (true);
-create policy "admin_upd_products" on products for update using (true);
-create policy "admin_del_products" on products for delete using (true);
+create policy "admin_ins_products" on products for insert with check (auth.role() = 'authenticated');
+create policy "admin_upd_products" on products for update using (auth.role() = 'authenticated');
+create policy "admin_del_products" on products for delete using (auth.role() = 'authenticated');
+
+-- Indexes for performance
+create index if not exists products_category_idx on products (category);
+create index if not exists products_active_idx on products (active);
+create index if not exists products_sort_order_idx on products (sort_order);
 
 -- Seed existing 8 products
 insert into products (id, name_ar, name_fr, category, price, badge, emoji, colors, sort_order) values
