@@ -3,6 +3,7 @@ import { useState, useEffect, Suspense } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import Image from 'next/image';
 import { supabase } from '@/lib/supabase';
+import { DEMO_ORDERS } from '@/lib/demo-orders';
 
 type StatusKey =
   | 'pending' | 'reviewing' | 'confirmed' | 'modified'
@@ -104,13 +105,27 @@ function TrackContent() {
         .eq('order_num', n)
         .single();
       if (error || !data) {
-        setNotFound(true);
+        // Fallback to DEMO_ORDERS for testing
+        const demoOrder = DEMO_ORDERS.find(o => o.order_num === n);
+        if (demoOrder) {
+          setStatus(demoOrder.status as StatusKey);
+          setFoundOrder({ customer_name: demoOrder.customer_name, product_name: demoOrder.product_name, product_emoji: demoOrder.product_emoji });
+        } else {
+          setNotFound(true);
+        }
       } else {
         setStatus(data.status as StatusKey);
         setFoundOrder({ customer_name: data.customer_name, product_name: data.product_name, product_emoji: data.product_emoji });
       }
     } catch {
-      setNotFound(true);
+      // Fallback to DEMO_ORDERS for testing
+      const demoOrder = DEMO_ORDERS.find(o => o.order_num === n);
+      if (demoOrder) {
+        setStatus(demoOrder.status as StatusKey);
+        setFoundOrder({ customer_name: demoOrder.customer_name, product_name: demoOrder.product_name, product_emoji: demoOrder.product_emoji });
+      } else {
+        setNotFound(true);
+      }
     }
     setSearching(false);
   };

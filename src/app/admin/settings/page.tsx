@@ -3,25 +3,9 @@ import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import Image from 'next/image';
 import { supabase } from '@/lib/supabase';
-
 const ADMIN_PASSWORD_DEFAULT = 'ihsen2026';
 
-const NAV = [
-  { id:'dashboard', ar:'الرئيسية',     fr:'Accueil',     href:'/admin/dashboard',
-    iconPath:'M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6' },
-  { id:'orders',    ar:'الطلبات',      fr:'Commandes',   href:'/admin/orders',
-    iconPath:'M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z' },
-  { id:'products',  ar:'المنتجات',     fr:'Produits',    href:'/admin/products',
-    iconPath:'M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4' },
-  { id:'delivery',  ar:'التوصيل',      fr:'Livraison',   href:'/admin/delivery',
-    iconPath:'M13 16V6a1 1 0 00-1-1H4a1 1 0 00-1 1v10a1 1 0 001 1h1m8-1a1 1 0 01-1 1H9m4-1V8a1 1 0 011-1h2.586a1 1 0 01.707.293l3.414 3.414a1 1 0 01.293.707V16a1 1 0 01-1 1h-1m-6-1a1 1 0 001 1h1M5 17a2 2 0 104 0m-4 0a2 2 0 114 0m6 0a2 2 0 104 0m-4 0a2 2 0 114 0' },
-  { id:'promos',    ar:'أكواد الخصم', fr:'Codes promo', href:'/admin/promos',
-    iconPath:'M7 7h.01M7 3h5c.512 0 1.024.195 1.414.586l7 7a2 2 0 010 2.828l-7 7a2 2 0 01-2.828 0l-7-7A2 2 0 013 12V7a4 4 0 014-4z' },
-  { id:'messages',  ar:'الرسائل',      fr:'Messages',    href:'/admin/messages',
-    iconPath:'M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z' },
-  { id:'settings',  ar:'الإعدادات',   fr:'Paramètres',  href:'/admin/settings',
-    iconPath:'M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065zM15 12a3 3 0 11-6 0 3 3 0 016 0z' },
-];
+
 
 type BiCat = { ar: string; fr: string };
 const DEFAULT_CLOTHING_CATS: BiCat[]  = [
@@ -71,7 +55,7 @@ export default function SettingsPage() {
   const [windowW,    setW]         = useState(1200);
   const [toasts,     setToasts]    = useState<Toast[]>([]);
   const [loading,    setLoading]   = useState(true);
-  const [section,    setSection]   = useState<'password'|'categories'|'social'|'contact'|'language'>('password');
+  const [section,    setSection]   = useState<'menu'|'password'|'categories'|'social'|'contact'|'language'>('password');
 
   // Password
   const [newPw,      setNewPw]     = useState('');
@@ -102,21 +86,22 @@ export default function SettingsPage() {
   const [notifSaving,setNotifSaving] = useState(false);
 
   // Language — read from localStorage synchronously to avoid flash
-  const [defaultLang,  setDefaultLang]  = useState<'ar'|'fr'>(() =>
+  const [activeLang, setActiveLang] = useState<'ar'|'fr'>(() =>
     typeof window !== 'undefined'
       ? (localStorage.getItem('ihsen_admin_lang') as 'ar'|'fr' | null) ?? 'ar'
       : 'ar'
   );
+  const [defaultLang,  setDefaultLang]  = useState<'ar'|'fr'>(activeLang);
   const [langSaving,   setLangSaving]   = useState(false);
 
-  const isAdminAr = defaultLang === 'ar';
+  const isAdminAr = activeLang === 'ar';
   const font = isAdminAr ? 'Cairo, sans-serif' : 'Inter, sans-serif';
   const C = {
     bg:'#EEF5F1', sidebar:'#1a3d2e', card:'#FFFFFF', card2:'#F3FAF6',
     border:'#D5E8DC', border2:'#B2CEBE', text:'#172B1E', muted:'#4E6D5C', sub:'#84A695',
     green:'#244D3B', greenL:'#2d5f49', gold:'#AF8E4A', goldL:'#c4a35a',
   };
-  const isMobile  = windowW < 640;
+  const isMobile  = windowW < 1024;
   const isDesktop = windowW >= 1024;
 
   const showToast = (msg: string, ok = true) => {
@@ -130,6 +115,7 @@ export default function SettingsPage() {
     const upd = () => setW(window.innerWidth);
     upd(); window.addEventListener('resize', upd);
     if (window.innerWidth < 1024) setSideOpen(false);
+    if (window.innerWidth < 1024) setSection('menu');
 
     // Load settings from Supabase
     Promise.all([
@@ -246,57 +232,28 @@ export default function SettingsPage() {
     setLangSaving(true);
     // Save to localStorage for instant effect across all admin pages
     localStorage.setItem('ihsen_admin_lang', defaultLang);
+    window.dispatchEvent(new Event('ihsen_lang_changed')); // Notify layout to update
+
     // Also persist to Supabase so it survives clearing localStorage
     const ok = await saveSetting('admin_lang', defaultLang);
+    if (ok) {
+      setActiveLang(defaultLang);
+    }
     setLangSaving(false);
+    const newIsAr = defaultLang === 'ar';
     const langLabel = (defaultLang as string) === 'ar' ? 'العربية' : 'Français';
-    showToast(ok ? (isAdminAr ? `تم تعيين لغة لوحة التحكم: ${langLabel}` : `Langue définie : ${langLabel}`) : (isAdminAr ? 'تعذر الحفظ' : 'Échec de l\'enregistrement'), ok);
+    showToast(ok ? (newIsAr ? `تم تعيين لغة لوحة التحكم: ${langLabel}` : `Langue définie : ${langLabel}`) : (newIsAr ? 'تعذر الحفظ' : 'Échec de l\'enregistrement'), ok);
   };
 
   // ── Sidebar ────────────────────────────────────────────────────────────────
-  const Sidebar = () => (
-    <aside style={{ width:sideOpen?(isMobile?'100%':240):60, flexShrink:0, background:C.sidebar, borderInlineEnd:`1px solid ${C.border}`, display:'flex', flexDirection:'column', transition:'width .3s', position:isMobile&&sideOpen?'fixed':'relative', top:0, bottom:0, zIndex:isMobile&&sideOpen?300:'auto', overflowX:'hidden' }}>
-      <div style={{ padding:'20px 16px', display:'flex', alignItems:'center', gap:10, borderBottom:'1px solid rgba(255,255,255,0.08)', cursor:'pointer' }} onClick={() => setSideOpen(!sideOpen)}>
-        <Image src="/logos/icon-white.svg" alt="إحسان" width={30} height={30} style={{ flexShrink:0 }} />
-        {sideOpen && <div><div style={{ fontWeight:800, fontSize:15, color:'#fff', fontFamily:font, whiteSpace:'nowrap' }}>إحسان — Admin</div><div style={{ fontSize:9, letterSpacing:2, color:C.gold, fontFamily:'Inter', textTransform:'uppercase' }}>{isAdminAr ? 'لوحة التحكم' : 'Tableau de bord'}</div></div>}
-      </div>
-      <nav style={{ flex:1, padding:'12px 8px', display:'flex', flexDirection:'column', gap:4 }}>
-        {NAV.map(item => {
-          const active = typeof window!=='undefined' && window.location.pathname.startsWith(item.href);
-          return (
-            <button key={item.id} onClick={() => { router.push(item.href); if(isMobile) setSideOpen(false); }}
-              style={{ display:'flex', alignItems:'center', gap:12, padding:'10px 12px', borderRadius:10, cursor:'pointer', background:active?'rgba(175,142,74,0.22)':'transparent', border:active?'1px solid rgba(175,142,74,0.45)':'1px solid transparent', color:active?'#d4a95e':'rgba(255,255,255,0.55)', width:'100%', textAlign: isAdminAr ? 'right' : 'left', transition:'all .2s', fontFamily:font, fontSize:13, fontWeight:active?700:400 }}
-              onMouseEnter={e=>{ if(!active) e.currentTarget.style.background='rgba(255,255,255,0.07)'; }}
-              onMouseLeave={e=>{ if(!active) e.currentTarget.style.background='transparent'; }}>
-              <span style={{ flexShrink:0, display:'flex', alignItems:'center', justifyContent:'center', width:18, height:18 }}>
-                <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
-                  <path d={item.iconPath} />
-                </svg>
-              </span>
-              {sideOpen && <span style={{ whiteSpace:'nowrap' }}>{isAdminAr ? item.ar : item.fr}</span>}
-            </button>
-          );
-        })}
-      </nav>
-      <div style={{ padding:'12px 8px', borderTop:'1px solid rgba(255,255,255,0.08)', display:'flex', flexDirection:'column', gap:4 }}>
-        <button onClick={() => router.push('/')} style={{ display:'flex', alignItems:'center', gap:12, padding:'8px 12px', borderRadius:10, background:'transparent', border:'none', color:'rgba(255,255,255,0.5)', cursor:'pointer', fontFamily:font, fontSize:12, width:'100%' }}>
-          <span style={{ flexShrink:0, display:'flex', alignItems:'center', justifyContent:'center', width:18, height:18 }}>
-            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="12" r="10"/><line x1="2" y1="12" x2="22" y2="12"/><path d="M12 2a15.3 15.3 0 014 10 15.3 15.3 0 01-4 10 15.3 15.3 0 01-4-10 15.3 15.3 0 014-10z"/></svg>
-          </span>
-          {sideOpen && (isAdminAr ? 'عرض الموقع' : 'Voir le site')}
-        </button>
-        <button onClick={() => { sessionStorage.removeItem('ihsen_admin'); router.replace('/admin'); }} style={{ display:'flex', alignItems:'center', gap:12, padding:'8px 12px', borderRadius:10, background:'transparent', border:'none', color:'rgba(239,68,68,0.6)', cursor:'pointer', fontFamily:font, fontSize:12, width:'100%' }}>
-          <span style={{ flexShrink:0, display:'flex', alignItems:'center', justifyContent:'center', width:18, height:18 }}>
-            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"><path d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1"/></svg>
-          </span>
-          {sideOpen && (isAdminAr ? 'تسجيل الخروج' : 'Déconnexion')}
-        </button>
-      </div>
-    </aside>
-  );
+
 
   // ── Section tabs ───────────────────────────────────────────────────────────
-  const TABS: { id: typeof section; ar: string; fr: string; icon: string }[] = [
+  const TABS: { id: string; ar: string; fr: string; icon: string; href?: string }[] = [
+    ...(!isDesktop ? [
+      { id:'delivery',   ar:'شركات التوصيل', fr:'Livraison',      icon:'M13 16V6a1 1 0 00-1-1H4a1 1 0 00-1 1v10a1 1 0 001 1h1m8-1a1 1 0 01-1 1H9m4-1V8a1 1 0 011-1h2.586a1 1 0 01.707.293l3.414 3.414a1 1 0 01.293.707V16a1 1 0 01-1 1h-1m-6-1a1 1 0 001 1h1M5 17a2 2 0 104 0m-4 0a2 2 0 114 0m6 0a2 2 0 104 0m-4 0a2 2 0 114 0', href: '/admin/delivery' },
+      { id:'promos',     ar:'أكواد الخصم',   fr:'Codes Promo',    icon:'M7 7h.01M7 3h5c.512 0 1.024.195 1.414.586l7 7a2 2 0 010 2.828l-7 7a2 2 0 01-2.828 0l-7-7A2 2 0 013 12V7a4 4 0 014-4z', href: '/admin/promos' },
+    ] : []),
     { id:'password',   ar:'كلمة المرور',   fr:'Mot de passe',  icon:'M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z' },
     { id:'categories', ar:'فئات المنتجات', fr:'Catégories',     icon:'M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10' },
     { id:'social',     ar:'مواقع التواصل', fr:'Réseaux sociaux', icon:'M13.828 10.172a4 4 0 00-5.656 0l-4 4a4 4 0 105.656 5.656l1.102-1.101m-.758-4.899a4 4 0 005.656 0l4-4a4 4 0 00-5.656-5.656l-1.1 1.1' },
@@ -317,7 +274,7 @@ export default function SettingsPage() {
     <div>
       <label style={{ fontSize:11, color:C.muted, display:'block', marginBottom:5, fontFamily:font }}>{label}</label>
       <input type={type} value={value} onChange={e=>onChange(e.target.value)} placeholder={placeholder} dir={dir}
-        style={{ width:'100%', padding:'10px 13px', borderRadius:10, border:`1.5px solid ${C.border}`, background:'#FAFCFB', color:C.text, fontFamily:font, fontSize:13, boxSizing:'border-box' as const, outline:'none' }} />
+        style={{ width:'100%', padding:'10px 13px', borderRadius:10, border:`1.5px solid ${C.border}`, background:'#FAFCFB', color:C.text, fontFamily:font, fontSize:13, boxSizing:'border-box' as const, outline:'none', textAlign: isAdminAr ? 'right' : 'left' }} />
     </div>
   );
 
@@ -337,7 +294,7 @@ export default function SettingsPage() {
   // ── Password show/hide btn ─────────────────────────────────────────────────
   const PwToggle = ({ show, onToggle }: { show:boolean; onToggle:()=>void }) => (
     <button type="button" onClick={onToggle}
-      style={{ position:'absolute', top:'50%', transform:'translateY(-50%)', left:12, background:'none', border:'none', cursor:'pointer', color:C.sub, display:'flex', alignItems:'center' }}>
+      style={{ position:'absolute', top:'50%', transform:'translateY(-50%)', insetInlineEnd:12, background:'none', border:'none', cursor:'pointer', color:C.sub, display:'flex', alignItems:'center' }}>
       {show
         ? <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M17.94 17.94A10.07 10.07 0 0112 20c-7 0-11-8-11-8a18.45 18.45 0 015.06-5.94M9.9 4.24A9.12 9.12 0 0112 4c7 0 11 8 11 8a18.5 18.5 0 01-2.16 3.19m-6.72-1.07a3 3 0 11-4.24-4.24"/><line x1="1" y1="1" x2="23" y2="23"/></svg>
         : <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>
@@ -346,48 +303,67 @@ export default function SettingsPage() {
   );
 
   return (
-    <div style={{ display:'flex', height:'100vh', background:C.bg, fontFamily:font, direction: isAdminAr ? 'rtl' : 'ltr', overflow:'hidden' }}>
-      <style>{`@keyframes spin{from{transform:rotate(0deg)}to{transform:rotate(360deg)}}@keyframes fadeUp{from{opacity:0;transform:translateY(6px)}to{opacity:1;transform:translateY(0)}}`}</style>
+    <div style={{ display:'flex', height:'100%', minHeight:'100%', background:C.bg, fontFamily:font, direction:isAdminAr?'rtl':'ltr', overflow:'hidden' }}>
+      <style>{`@keyframes fadeUp{from{opacity:0;transform:translateY(6px)}to{opacity:1;transform:translateY(0)}} @keyframes spin{from{transform:rotate(0deg)}to{transform:rotate(360deg)}}`}</style>
 
-      <Sidebar />
-      {isMobile && sideOpen && <div onClick={()=>setSideOpen(false)} style={{ position:'fixed', inset:0, background:'#00000060', zIndex:299 }} />}
-
+      {/* Main content */}
       <div style={{ flex:1, display:'flex', flexDirection:'column', overflow:'hidden' }}>
-
         {/* Header */}
-        <div style={{ padding: isMobile?'14px 12px':'18px 24px', borderBottom:`1px solid ${C.border}`, display:'flex', alignItems:'center', gap:10, flexShrink:0, background:'#ffffff', boxShadow:'0 1px 0 rgba(36,77,59,.06)' }}>
-          {isMobile && <button onClick={()=>setSideOpen(true)} style={{ background:'none', border:`1px solid ${C.border}`, borderRadius:8, padding:'5px 9px', cursor:'pointer', color:C.text, fontSize:16 }}>☰</button>}
+        <div style={{ padding:isMobile?'14px 12px':'18px 24px', borderBottom:`1px solid ${C.border}`, display:'flex', alignItems:'center', gap:12, flexShrink:0, background:'#fff', boxShadow:'0 1px 0 rgba(36,77,59,.06)' }}>
+          {isMobile && section !== 'menu' && (
+            <button onClick={() => setSection('menu')} style={{ background:'none', border:`1px solid ${C.border}`, borderRadius:8, padding:'5px 9px', cursor:'pointer', color:C.text, display:'flex', alignItems:'center', justifyContent:'center' }}>
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" style={{ transform:isAdminAr?'scaleX(-1)':'none' }}><polyline points="15 18 9 12 15 6"/></svg>
+            </button>
+          )}
           <div style={{ width:36, height:36, borderRadius:10, background:`linear-gradient(135deg, ${C.green}, #1D4939)`, display:'flex', alignItems:'center', justifyContent:'center', flexShrink:0 }}>
             <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="rgba(255,255,255,.85)" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-              <path d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065zM15 12a3 3 0 11-6 0 3 3 0 016 0z"/>
+              <circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 00.33 1.82l.06.06a2 2 0 010 2.83 2 2 0 01-2.83 0l-.06-.06a1.65 1.65 0 00-1.82-.33 1.65 1.65 0 00-1 1.51V21a2 2 0 01-2 2 2 2 0 01-2-2v-.09A1.65 1.65 0 009 19.4a1.65 1.65 0 00-1.82.33l-.06.06a2 2 0 01-2.83 0 2 2 0 010-2.83l.06-.06a1.65 1.65 0 00.33-1.82 1.65 1.65 0 00-1.51-1H3a2 2 0 01-2-2 2 2 0 012-2h.09A1.65 1.65 0 004.6 9a1.65 1.65 0 00-.33-1.82l-.06-.06a2 2 0 010-2.83 2 2 0 012.83 0l.06.06a1.65 1.65 0 001.82.33H9a1.65 1.65 0 001-1.51V3a2 2 0 012-2 2 2 0 012 2v.09a1.65 1.65 0 001 1.51 1.65 1.65 0 001.82-.33l.06-.06a2 2 0 012.83 0 2 2 0 010 2.83l-.06.06a1.65 1.65 0 00-.33 1.82V9a1.65 1.65 0 001.51 1H21a2 2 0 012 2 2 2 0 01-2 2h-.09a1.65 1.65 0 00-1.51 1z"/>
             </svg>
           </div>
           <div>
-            <h1 style={{ fontSize:isMobile?15:18, fontWeight:800, color:C.text, margin:0 }}>{isAdminAr ? 'الإعدادات' : 'Paramètres'}</h1>
-            <p style={{ fontSize:11, color:C.muted, margin:0 }}>{isAdminAr ? 'إدارة الموقع وإعداداته' : 'Gestion du site'}</p>
+            <h1 style={{ fontSize:isMobile?15:18, fontWeight:800, color:C.text, margin:0 }}>
+              {isMobile && section !== 'menu' 
+                ? (isAdminAr ? TABS.find(t=>t.id===section)?.ar : TABS.find(t=>t.id===section)?.fr) 
+                : (isAdminAr ? 'الإعدادات' : 'Paramètres')}
+            </h1>
+            <p style={{ fontSize:11, color:C.muted, margin:0 }}>
+              {isMobile && section !== 'menu' 
+                ? (isAdminAr ? 'إعدادات القسم' : 'Paramètres de section') 
+                : (isAdminAr ? 'إدارة الموقع وإعداداته' : 'Gestion du site')}
+            </p>
           </div>
         </div>
 
-        <div style={{ flex:1, overflowY:'auto', padding: isMobile?'14px 12px':'24px', display:'flex', flexDirection: isMobile?'column':'row', gap:20, alignItems:'flex-start' }}>
+        <div style={{ flex:1, overflowY:'auto', padding: isMobile?'14px 12px':'24px', display:'flex', flexDirection: isMobile?'column':'row', gap:20, alignItems: isMobile?'stretch':'flex-start' }}>
 
           {/* Left: section tabs */}
-          <div data-reveal data-reveal-dir="right" style={{ width: isMobile?'100%':220, flexShrink:0, display:'flex', flexDirection: isMobile?'row':'column', gap:6, flexWrap: isMobile?'wrap':undefined }}>
-            {TABS.map(tab => {
-              const active = section === tab.id;
-              return (
-                <button key={tab.id} onClick={()=>setSection(tab.id)}
-                  style={{ display:'flex', alignItems:'center', gap:10, padding:'11px 14px', borderRadius:11, border:`1.5px solid ${active?C.gold+'60':C.border}`, background: active ? `${C.gold}12` : C.card, color: active ? C.gold : C.muted, fontFamily:font, fontSize:13, fontWeight: active ? 800 : 500, cursor:'pointer', transition:'all .18s', textAlign:'right', flex: isMobile?'1 0 auto':undefined, justifyContent: isMobile?'center':'flex-start' }}>
-                  <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" style={{ flexShrink:0 }}>
-                    <path d={tab.icon}/>
-                  </svg>
-                  {!isMobile && (isAdminAr ? tab.ar : tab.fr)}
-                </button>
-              );
-            })}
-          </div>
+          {(!isMobile || section === 'menu') && (
+            <div data-reveal data-reveal-dir="right" style={{ width: isMobile?'100%':220, flexShrink:0, display:'flex', flexDirection:'column', gap:6, paddingBottom: isMobile?8:0 }}>
+              {TABS.map(tab => {
+                const active = section === tab.id;
+                return (
+                  <button key={tab.id} onClick={()=>{ if(tab.href) router.push(tab.href); else setSection(tab.id as any); }}
+                    style={{ display:'flex', alignItems:'center', gap:12, padding:'14px 16px', borderRadius:12, border:`1.5px solid ${active?C.gold+'60':C.border}`, background: active ? `${C.gold}12` : '#ffffff', color: active ? C.gold : C.text, fontFamily:font, fontSize:14, fontWeight: active ? 800 : 600, cursor:'pointer', transition:'all .18s', textAlign: isAdminAr ? 'right' : 'left', flexShrink: 0, justifyContent: 'flex-start', boxShadow:'0 1px 4px rgba(36,77,59,.03)' }}>
+                    <span style={{ background: active ? `${C.gold}20` : C.card2, width:32, height:32, borderRadius:8, display:'flex', alignItems:'center', justifyContent:'center', color: active ? C.gold : C.muted, flexShrink:0 }}>
+                      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                        <path d={tab.icon}/>
+                      </svg>
+                    </span>
+                    <span style={{ flex:1 }}>{isAdminAr ? tab.ar : tab.fr}</span>
+                    {isMobile && (
+                      <span style={{ color:C.muted }}>
+                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" style={{ transform:isAdminAr?'rotate(180deg)':'none' }}><polyline points="9 18 15 12 9 6"/></svg>
+                      </span>
+                    )}
+                  </button>
+                );
+              })}
+            </div>
+          )}
 
           {/* Right: section content */}
-          <div data-reveal data-reveal-delay="80" style={{ flex:1, minWidth:0, animation:'fadeUp .25s ease' }}>
+          {(!isMobile || section !== 'menu') && (
+            <div data-reveal data-reveal-delay="80" style={{ flex:1, minWidth:0, animation:'fadeUp .25s ease' }}>
 
             {/* ── PASSWORD ── */}
             {section === 'password' && (
@@ -404,7 +380,7 @@ export default function SettingsPage() {
                   <div style={{ position:'relative' }}>
                     <label style={{ fontSize:11, color:C.muted, display:'block', marginBottom:5, fontFamily:font }}>{isAdminAr ? 'كلمة المرور الجديدة' : 'Nouveau mot de passe'}</label>
                     <input type={showNew?'text':'password'} value={newPw} onChange={e=>setNewPw(e.target.value)}
-                      style={{ width:'100%', padding:'10px 13px 10px 38px', borderRadius:10, border:`1.5px solid ${C.border}`, background:'#FAFCFB', color:C.text, fontFamily:font, fontSize:13, boxSizing:'border-box' as const, outline:'none' }} />
+                      style={{ width:'100%', padding:'10px 13px', paddingInlineEnd:38, borderRadius:10, border:`1.5px solid ${C.border}`, background:'#FAFCFB', color:C.text, fontFamily:font, fontSize:13, boxSizing:'border-box' as const, outline:'none', textAlign: isAdminAr ? 'right' : 'left' }} />
                     <PwToggle show={showNew} onToggle={()=>setShowNew(v=>!v)} />
                   </div>
 <Inp label={isAdminAr ? "تأكيد كلمة المرور الجديدة" : "Confirmer le mot de passe"} value={confPw} onChange={setConfPw} type="password" />
@@ -685,7 +661,6 @@ export default function SettingsPage() {
                       }}>
                       <div style={{ fontSize:30 }}>ع</div>
                       <div style={{ fontFamily:'Cairo, sans-serif', fontSize:15, fontWeight:800, color: defaultLang==='ar' ? C.green : C.text }}>العربية</div>
-                      <div style={{ fontFamily:'Inter, sans-serif', fontSize:10, color:C.sub, letterSpacing:.5 }}>RTL — دير اليمين لليسار</div>
                       {defaultLang === 'ar' && (
                         <div style={{ width:20, height:20, borderRadius:'50%', background:C.green, display:'flex', alignItems:'center', justifyContent:'center' }}>
                           <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="#fff" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round"><polyline points="20 6 9 17 4 12"/></svg>
@@ -705,7 +680,6 @@ export default function SettingsPage() {
                       }}>
                       <div style={{ fontSize:30, fontFamily:'Inter' }}>Fr</div>
                       <div style={{ fontFamily:'Inter, sans-serif', fontSize:15, fontWeight:800, color: defaultLang==='fr' ? '#1D4ED8' : C.text }}>Français</div>
-                      <div style={{ fontFamily:'Inter, sans-serif', fontSize:10, color:C.sub, letterSpacing:.5 }}>LTR — Gauche à droite</div>
                       {defaultLang === 'fr' && (
                         <div style={{ width:20, height:20, borderRadius:'50%', background:'#1D4ED8', display:'flex', alignItems:'center', justifyContent:'center' }}>
                           <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="#fff" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round"><polyline points="20 6 9 17 4 12"/></svg>
@@ -720,8 +694,8 @@ export default function SettingsPage() {
                 </div>
               </div>
             )}
-
           </div>
+          )}
         </div>
       </div>
 

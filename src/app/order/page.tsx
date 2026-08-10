@@ -266,9 +266,12 @@ function OrderContent() {
       const safeWilaya       = sanitizeText(wilaya, 60);
       const safeCommune      = sanitizeText(commune, 80);
       const safeAddress      = sanitizeText(address, 200);
-      const companyNote      = selectedCompany && deliveryCompanies.length > 1 ? `[شركة التوصيل: ${selectedCompany.name}]` : '';
-      const combinedNotes    = [companyNote, notes.trim() ? sanitizeText(notes, 500) : ''].filter(Boolean).join(' ') || null;
-      const safeNotes        = combinedNotes;
+      const notesObj = {
+        text: notes.trim() ? sanitizeText(notes, 500) : null,
+        company: selectedCompany && deliveryCompanies.length > 1 ? selectedCompany.name : null,
+        items: fromCart ? cartItems.map(i => ({ name: i.nameAr, emoji: i.emoji, size: i.size, qty: i.qty, price: i.price })) : null
+      };
+      const safeNotes = JSON.stringify(notesObj);
 
       const { error } = await supabase.from('orders').insert({
         order_num:     num,
@@ -279,15 +282,13 @@ function OrderContent() {
         commune:       safeCommune,
         address:       safeAddress,
         delivery_type: deliveryType,
-        // Single-product fields (null when from cart)
-        product_id:    fromCart ? null : product.id,
+        // Single-product fields (0/'-' when from cart to satisfy NOT NULL)
+        product_id:    fromCart ? 0 : product.id,
         product_name:  fromCart ? cartItems.map(i => i.nameAr).join('، ') : product.nameAr,
-        product_emoji: fromCart ? 'cart' : (product as unknown as {emoji?: string}).emoji ?? '',
-        color_index:   fromCart ? null : color,
-        size:          fromCart ? null : size,
+        product_emoji: fromCart ? '🛍️' : (product as unknown as {emoji?: string}).emoji ?? '🛍️',
+        color_index:   fromCart ? 0 : color,
+        size:          fromCart ? '-' : size,
         qty:           fromCart ? cartItems.reduce((s, i) => s + i.qty, 0) : qty,
-        // Cart items JSON
-        items:         cartPayload ? JSON.stringify(cartPayload) : null,
         subtotal,
         delivery_price: deliveryPrice,
         discount,
@@ -295,11 +296,19 @@ function OrderContent() {
         total,
         notes:         safeNotes,
       });
-      if (error) console.error('Supabase insert error:', error.message);
+      if (error) {
+        console.error('Supabase insert error:', error.message);
+        alert(isAdminAr ? 'حدث خطأ أثناء حفظ الطلب. يرجى المحاولة مرة أخرى.' : 'Erreur lors de l\'enregistrement. Veuillez réessayer.');
+        setLoading(false);
+        return;
+      }
 
       // Increment used_count for the promo code
       if (appliedPromo?.code) {
-        await supabase.rpc('increment_promo_used', { p_code: appliedPromo.code });
+        const { data: pData } = await supabase.from('promo_codes').select('id, used_count').eq('code', appliedPromo.code).single();
+        if (pData) {
+          await supabase.from('promo_codes').update({ used_count: (pData.used_count || 0) + 1 }).eq('id', pData.id);
+        }
       }
     } catch (e) {
       // Supabase not yet set up — continue anyway in demo mode

@@ -40,10 +40,8 @@ export default function AdminDashboard() {
   const router = useRouter();
   const [orders,    setOrders]   = useState<Order[]>(DEMO_ORDERS);
   const [loading,   setLoading]  = useState(true);
-  const [sideOpen,  setSideOpen] = useState(true);
   const [windowW,   setW]        = useState(1200);
   const [mounted,   setMounted]  = useState(false);
-  const [notifOpen, setNotif]    = useState(false);
   const [adminLang, setAdminLang] = useState<'ar'|'fr'>('ar');
 
   useEffect(() => {
@@ -53,7 +51,6 @@ export default function AdminDashboard() {
       const upd = () => setW(window.innerWidth);
       upd();
       window.addEventListener('resize', upd);
-      if (window.innerWidth < 1024) setSideOpen(false);
       setTimeout(() => setMounted(true), 60);
 
       // Load real orders from Supabase (fallback to demo if table not ready)
@@ -70,7 +67,7 @@ export default function AdminDashboard() {
     }
   }, [router]);
 
-  const isMobile  = windowW < 640;
+  const isMobile  = windowW < 768;
   const isDesktop = windowW >= 1024;
 
   const C = {
@@ -113,256 +110,8 @@ export default function AdminDashboard() {
   // Recent orders
   const recent = [...orders].sort((a,b)=>new Date(b.created_at).getTime()-new Date(a.created_at).getTime()).slice(0,5);
 
-  const logout = () => { sessionStorage.removeItem('ihsen_admin'); router.replace('/admin'); };
-
-  const Sidebar = () => (
-    <aside style={{
-      width: isMobile ? 260 : (sideOpen ? 240 : 60), flexShrink:0,
-      background: C.sidebar,
-      borderLeft: isMobile ? 'none' : `1px solid ${C.border}`,
-      display:'flex', flexDirection:'column',
-      transition:'transform .3s cubic-bezier(0.32,0.72,0,1)',
-      position: isMobile ? 'fixed' : 'relative',
-      top: isMobile ? 0 : 'auto',
-      bottom: isMobile ? 0 : 'auto',
-      right: isAdminAr && isMobile ? 0 : 'auto',
-      left:  !isAdminAr && isMobile ? 0 : 'auto',
-      zIndex: isMobile ? 300 : 'auto',
-      transform: isMobile ? (sideOpen ? 'translateX(0%)' : (isAdminAr ? 'translateX(110%)' : 'translateX(-110%)')) : 'none',
-      overflowX:'hidden',
-      overflowY: isMobile ? 'auto' : 'visible',
-    }}>
-      {/* Logo */}
-      <div style={{ padding:'20px 16px', display:'flex', alignItems:'center', gap:10, borderBottom:'1px solid rgba(255,255,255,0.08)', cursor:'pointer' }} onClick={() => setSideOpen(!sideOpen)}>
-        <Image src="/logos/icon-white.svg" alt="إحسان" width={30} height={30} style={{ flexShrink:0 }} />
-        {sideOpen && (
-          <div style={{ overflow:'hidden' }}>
-            <div style={{ fontWeight:800, fontSize:15, color:'#fff', fontFamily:font, whiteSpace:'nowrap' }}>إحسان — Admin</div>
-            <div style={{ fontSize:9, letterSpacing:2, color:C.gold, fontFamily:'Inter', textTransform:'uppercase' }}>{isAdminAr ? 'لوحة التحكم' : 'Tableau de bord'}</div>
-          </div>
-        )}
-      </div>
-
-      {/* Nav */}
-      <nav style={{ flex:1, padding:'12px 8px', display:'flex', flexDirection:'column', gap:4 }}>
-        {NAV_ITEMS.map(item => {
-          const active = typeof window !== 'undefined' && window.location.pathname.startsWith(item.href) && (item.href !== '/admin/dashboard' || window.location.pathname === item.href);
-          return (
-            <button key={item.id} onClick={() => { router.push(item.href); if(isMobile) setSideOpen(false); }} style={{
-              display:'flex', alignItems:'center', gap:12, padding:'10px 12px', borderRadius:10, cursor:'pointer',
-              background: active ? 'rgba(175,142,74,0.22)' : 'transparent',
-              border: active ? '1px solid rgba(175,142,74,0.45)' : '1px solid transparent',
-              color: active ? '#d4a95e' : 'rgba(255,255,255,0.55)', width:'100%', textAlign: isAdminAr ? 'right' : 'left',
-              transition:'all .2s cubic-bezier(0.22,1,0.36,1)', fontFamily:font, fontSize:13, fontWeight: active?700:400,
-            }}
-              onMouseEnter={e => { if(!active) e.currentTarget.style.background = 'rgba(255,255,255,0.07)'; e.currentTarget.style.color = 'rgba(255,255,255,0.85)'; }}
-              onMouseLeave={e => { if(!active) { e.currentTarget.style.background = 'transparent'; e.currentTarget.style.color = 'rgba(255,255,255,0.55)'; } }}
-            >
-              <span style={{ flexShrink:0, display:'flex', alignItems:'center', justifyContent:'center', width:18, height:18 }}>
-                <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
-                  <path d={item.iconPath} />
-                </svg>
-              </span>
-              {sideOpen && <span style={{ whiteSpace:'nowrap' }}>{isAdminAr ? item.ar : item.fr}</span>}
-            </button>
-          );
-        })}
-      </nav>
-
-      {/* Bottom */}
-      <div style={{ padding:'12px 8px', borderTop:'1px solid rgba(255,255,255,0.08)', display:'flex', flexDirection:'column', gap:4 }}>
-        <button onClick={() => router.push('/')} style={{ display:'flex', alignItems:'center', gap:12, padding:'8px 12px', borderRadius:10, background:'transparent', border:'none', color:'rgba(255,255,255,0.5)', cursor:'pointer', fontFamily:font, fontSize:12, width:'100%' }}>
-          <span style={{ flexShrink:0, display:'flex', alignItems:'center', justifyContent:'center', width:18, height:18 }}>
-            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
-              <circle cx="12" cy="12" r="10"/><line x1="2" y1="12" x2="22" y2="12"/>
-              <path d="M12 2a15.3 15.3 0 014 10 15.3 15.3 0 01-4 10 15.3 15.3 0 01-4-10 15.3 15.3 0 014-10z"/>
-            </svg>
-          </span>
-          {sideOpen && (isAdminAr ? 'عرض الموقع' : 'Voir le site')}
-        </button>
-        <button onClick={logout} style={{ display:'flex', alignItems:'center', gap:12, padding:'8px 12px', borderRadius:10, background:'transparent', border:'none', color:'rgba(239,68,68,0.6)', cursor:'pointer', fontFamily:font, fontSize:12, width:'100%' }}>
-          <span style={{ flexShrink:0, display:'flex', alignItems:'center', justifyContent:'center', width:18, height:18 }}>
-            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
-              <path d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1"/>
-            </svg>
-          </span>
-          {sideOpen && (isAdminAr ? 'تسجيل الخروج' : 'Déconnexion')}
-        </button>
-      </div>
-    </aside>
-  );
-
   return (
-    <div style={{ height:'100vh', overflow:'hidden', display:'flex', background:C.bg, fontFamily:font, direction:dir, color:C.text }}>
-      <style>{`
-        @keyframes ihsen-fadeInUp {
-          from { opacity:0; transform:translateY(20px); }
-          to   { opacity:1; transform:translateY(0); }
-        }
-        @keyframes ihsen-scaleIn {
-          from { opacity:0; transform:scale(0.88); }
-          to   { opacity:1; transform:scale(1); }
-        }
-        @keyframes ihsen-slideR {
-          from { opacity:0; transform:translateX(14px); }
-          to   { opacity:1; transform:translateX(0); }
-        }
-        @keyframes ihsen-barGrow {
-          from { width:0 !important; }
-          to   { width:var(--bar-w); }
-        }
-        @keyframes ihsen-pulse-dot {
-          0%,100% { box-shadow:0 0 0 0 rgba(16,185,129,0.5); }
-          50%      { box-shadow:0 0 0 6px rgba(16,185,129,0); }
-        }
-        @keyframes ihsen-bellRing {
-          0%,100% { transform:rotate(0deg); }
-          20%      { transform:rotate(-15deg); }
-          40%      { transform:rotate(12deg); }
-          60%      { transform:rotate(-8deg); }
-          80%      { transform:rotate(5deg); }
-        }
-        .ihsen-card-enter { animation: ihsen-fadeInUp 0.5s cubic-bezier(0.22,1,0.36,1) both; }
-        .ihsen-row-enter  { animation: ihsen-slideR   0.4s cubic-bezier(0.22,1,0.36,1) both; }
-        .ihsen-kpi-val    { animation: ihsen-scaleIn  0.45s cubic-bezier(0.22,1,0.36,1) both; }
-        .ihsen-bar        { transition: width 0.8s cubic-bezier(0.22,1,0.36,1); }
-        .ihsen-nav-item   { animation: ihsen-slideR   0.35s cubic-bezier(0.22,1,0.36,1) both; }
-        .ihsen-topbar     { animation: ihsen-fadeInUp 0.4s cubic-bezier(0.22,1,0.36,1) both; }
-        .ihsen-bell-ring  { animation: ihsen-bellRing 1s ease 2s 1; }
-        .ihsen-pulse-dot  { animation: ihsen-pulse-dot 2s ease-in-out infinite; }
-        tr.ihsen-row-hover { transition: background .18s ease, transform .18s cubic-bezier(0.22,1,0.36,1); }
-        tr.ihsen-row-hover:hover { background: rgba(36,77,59,0.07) !important; transform: translateX(-3px); }
-        @keyframes ihsen-shimmer { from{background-position:200% 0} to{background-position:-200% 0} }
-        .ihsen-skel { background:linear-gradient(90deg,#e8f0eb 25%,#f3f8f5 50%,#e8f0eb 75%);background-size:200% 100%;animation:ihsen-shimmer 1.4s ease-in-out infinite;border-radius:6px; }
-      `}</style>
-      {/* Backdrop (mobile sidebar) */}
-      {isMobile && sideOpen && <div onClick={() => setSideOpen(false)} style={{ position:'fixed', inset:0, background:'rgba(0,0,0,.6)', zIndex:200 }} />}
-
-      <Sidebar />
-
-      {/* Main */}
-      <div style={{ flex:1, overflow:'hidden', display:'flex', flexDirection:'column' }}>
-
-        {/* Topbar */}
-        <div className="ihsen-topbar" style={{ background:'#ffffff', borderBottom:`1px solid ${C.border}`, padding:'10px 20px', display:'flex', alignItems:'center', justifyContent:'space-between', position:'sticky', top:0, zIndex:100, boxShadow:'0 1px 8px rgba(36,77,59,.05)' }}>
-          {/* Right side (RTL) — title */}
-          <div style={{ display:'flex', alignItems:'center', gap:12 }}>
-            {!isDesktop && (
-              <button onClick={() => setSideOpen(!sideOpen)} style={{ background:'none', border:'none', cursor:'pointer', color:C.muted, display:'flex', alignItems:'center', justifyContent:'center', width:34, height:34, borderRadius:8, transition:'background .15s' }}
-                onMouseEnter={e => e.currentTarget.style.background = C.border}
-                onMouseLeave={e => e.currentTarget.style.background = 'transparent'}>
-                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                  <line x1="3" y1="6" x2="21" y2="6"/><line x1="3" y1="12" x2="21" y2="12"/><line x1="3" y1="18" x2="21" y2="18"/>
-                </svg>
-              </button>
-            )}
-            <div>
-              <div style={{ fontSize:15, fontWeight:800, color:C.text, lineHeight:1.2 }}>{isAdminAr ? 'نظرة عامة' : 'Vue d\'ensemble'}</div>
-              <div style={{ fontSize:10.5, color:C.sub, marginTop:1 }}>{new Date().toLocaleDateString(isAdminAr ? 'ar-DZ' : 'fr-DZ', { weekday:'long', year:'numeric', month:'long', day:'numeric' })}</div>
-            </div>
-          </div>
-          {/* Left side — actions */}
-          <div style={{ display:'flex', alignItems:'center', gap:8 }}>
-            {/* Refresh */}
-            <button onClick={() => window.location.reload()} style={{ width:34, height:34, borderRadius:8, border:`1px solid ${C.border}`, background:'transparent', cursor:'pointer', color:C.muted, display:'flex', alignItems:'center', justifyContent:'center', transition:'all .15s' }}
-              onMouseEnter={e => { e.currentTarget.style.background = C.card2; e.currentTarget.style.color = C.green; }}
-              onMouseLeave={e => { e.currentTarget.style.background = 'transparent'; e.currentTarget.style.color = C.muted; }}>
-              <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                <polyline points="23 4 23 10 17 10"/><path d="M20.49 15a9 9 0 11-2.12-9.36L23 10"/>
-              </svg>
-            </button>
-            {/* Bell + Notifications */}
-            <div style={{ position:'relative' }}>
-              <button onClick={() => setNotif(v => !v)} style={{ width:34, height:34, borderRadius:8, border:`1px solid ${notifOpen ? C.gold : C.border}`, background: notifOpen ? `${C.gold}12` : 'transparent', cursor:'pointer', color: notifOpen ? C.gold : C.muted, display:'flex', alignItems:'center', justifyContent:'center', position:'relative', transition:'all .15s' }}
-                onMouseEnter={e => { if(!notifOpen){ e.currentTarget.style.background = C.card2; e.currentTarget.style.color = C.green; } }}
-                onMouseLeave={e => { if(!notifOpen){ e.currentTarget.style.background = 'transparent'; e.currentTarget.style.color = C.muted; } }}>
-                <span className={!notifOpen ? 'ihsen-bell-ring' : ''} style={{ display:'flex', alignItems:'center', justifyContent:'center' }}>
-                  <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                    <path d="M18 8A6 6 0 006 8c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.73 21a2 2 0 01-3.46 0"/>
-                  </svg>
-                </span>
-                {orders.filter(o => o.status === 'pending' || o.status === 'reviewing').length > 0 && (
-                  <span style={{ position:'absolute', top:5, insetInlineStart:5, width:8, height:8, borderRadius:'50%', background:'#EF4444', border:'2px solid #fff', fontSize:0 }} />
-                )}
-              </button>
-
-              {/* Notifications dropdown */}
-              {notifOpen && (
-                <>
-                  <div onClick={() => setNotif(false)} style={{ position:'fixed', inset:0, zIndex:190 }} />
-                  <div style={{ position:'absolute', top:'calc(100% + 8px)', insetInlineEnd:0, width:300, background:C.card, border:`1px solid ${C.border}`, borderRadius:14, boxShadow:'0 12px 36px rgba(0,0,0,.13)', zIndex:200, overflow:'hidden' }}>
-                    {/* Header */}
-                    <div style={{ padding:'12px 16px', borderBottom:`1px solid ${C.border}`, display:'flex', justifyContent:'space-between', alignItems:'center' }}>
-                      <div style={{ fontSize:13, fontWeight:800, color:C.text, fontFamily:font }}>{isAdminAr ? 'الإشعارات' : 'Notifications'}</div>
-                      <span style={{ fontSize:10, background:`${C.gold}20`, color:C.gold, borderRadius:100, padding:'2px 8px', fontFamily:'Inter', fontWeight:700 }}>
-                        {orders.filter(o => o.status==='pending' || o.status==='reviewing').length} {isAdminAr ? 'معلق' : 'en attente'}
-                      </span>
-                    </div>
-
-                    {/* Items */}
-                    <div style={{ maxHeight:320, overflowY:'auto' }}>
-                      {orders.filter(o => o.status==='pending' || o.status==='reviewing').length === 0 ? (
-                        <div style={{ padding:'28px 16px', textAlign:'center', color:C.sub, fontFamily:font, fontSize:13 }}>
-                          <div style={{ marginBottom:10, display:'flex', justifyContent:'center' }}>
-                            <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="#10B981" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
-                              <path d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/>
-                            </svg>
-                          </div>
-                          {isAdminAr ? 'لا توجد طلبات معلقة' : 'Aucune commande en attente'}
-                        </div>
-                      ) : (
-                        orders
-                          .filter(o => o.status==='pending' || o.status==='reviewing')
-                          .sort((a,b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime())
-                          .slice(0, 10)
-                          .map(o => {
-                            const meta = { pending:{ar:'في الانتظار',fr:'En attente',color:'#6B7280'}, reviewing:{ar:'مراجعة',fr:'En révision',color:'#F59E0B'} }[o.status as 'pending'|'reviewing'] ?? {ar:'',color:''};
-                            return (
-                              <div key={o.id}
-                                onClick={() => { router.push(`/admin/orders?id=${o.id}`); setNotif(false); }}
-                                style={{ padding:'11px 16px', borderBottom:`1px solid ${C.border}20`, cursor:'pointer', transition:'background .15s', display:'flex', gap:10, alignItems:'flex-start' }}
-                                onMouseEnter={e => e.currentTarget.style.background = C.card2}
-                                onMouseLeave={e => e.currentTarget.style.background = 'transparent'}>
-                                <div style={{ width:34, height:34, borderRadius:9, background:`${C.green}15`, display:'flex', alignItems:'center', justifyContent:'center', flexShrink:0, marginTop:1 }}>
-                                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke={C.green} strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
-                                    <path d="M21 16V8a2 2 0 00-1-1.73l-7-4a2 2 0 00-2 0l-7 4A2 2 0 003 8v8a2 2 0 001 1.73l7 4a2 2 0 002 0l7-4A2 2 0 0021 16z"/>
-                                  </svg>
-                                </div>
-                                <div style={{ flex:1, minWidth:0 }}>
-                                  <div style={{ display:'flex', justifyContent:'space-between', alignItems:'center', gap:6 }}>
-                                    <span style={{ fontFamily:'Inter', fontSize:12, fontWeight:700, color:C.gold }}>{o.order_num}</span>
-                                    <span style={{ fontSize:10, background:`${meta.color}20`, color:meta.color, borderRadius:100, padding:'1px 7px', fontFamily:'Inter', fontWeight:700, whiteSpace:'nowrap' }}>{isAdminAr ? meta.ar : meta.fr}</span>
-                                  </div>
-                                  <div style={{ fontSize:12, color:C.text, fontFamily:font, marginTop:2, overflow:'hidden', textOverflow:'ellipsis', whiteSpace:'nowrap' }}>{o.customer_name} — {o.wilaya}</div>
-                                  <div style={{ fontSize:11, color:C.sub, fontFamily:font, marginTop:1 }}>{o.product_name.split('—')[0].trim()} · {o.total.toLocaleString()} {isAdminAr ? 'دج' : 'DA'}</div>
-                                </div>
-                              </div>
-                            );
-                          })
-                      )}
-                    </div>
-
-                    {/* Footer */}
-                    <div style={{ padding:'10px 16px', borderTop:`1px solid ${C.border}` }}>
-                      <button onClick={() => { router.push('/admin/orders'); setNotif(false); }}
-                        style={{ width:'100%', padding:'8px', borderRadius:8, border:`1px solid ${C.border}`, background:C.card2, color:C.gold, fontFamily:font, fontSize:12, fontWeight:700, cursor:'pointer' }}>
-                        {isAdminAr ? 'عرض جميع الطلبات' : 'Voir toutes les commandes'}
-                      </button>
-                    </div>
-                  </div>
-                </>
-              )}
-            </div>
-            {/* Status dot */}
-            <div style={{ display:'flex', alignItems:'center', gap:6, paddingInlineStart:4, borderInlineStart:`1px solid ${C.border}`, marginInlineStart:4 }}>
-              <div className="ihsen-pulse-dot" style={{ width:7, height:7, borderRadius:'50%', background:'#10B981', flexShrink:0 }} />
-              <span style={{ fontSize:11, color:C.sub }}>{isAdminAr ? 'متصل' : 'Connecté'}</span>
-            </div>
-          </div>
-        </div>
-
-        {/* Content */}
-        <div style={{ flex:1, padding: isMobile?'16px':'24px 28px', overflowY:'auto' }}>
+    <div style={{ padding: isMobile?'16px':'24px 28px' }}>
 
           {/* KPI Cards */}
           <div style={{ display:'grid', gridTemplateColumns: isMobile?'1fr 1fr':'repeat(4,1fr)', gap: isMobile?12:16, marginBottom:24 }}>
@@ -560,8 +309,6 @@ export default function AdminDashboard() {
               ))}
             </div>
           </div>
-        </div>
-      </div>
     </div>
   );
 }

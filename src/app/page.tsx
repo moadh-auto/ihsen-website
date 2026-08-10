@@ -260,7 +260,7 @@ export default function LandingPage() {
           position:'relative', background:'none',
           border:`1px solid ${navScrolled ? C.border : 'rgba(255,255,255,.2)'}`,
           borderRadius:8, padding:'5px 9px', cursor:'pointer', fontSize:16,
-          display:'flex', alignItems:'center',
+          display:'flex', alignItems:'center', color: navScrolled ? C.text : '#fff',
         }}>
           <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><circle cx="9" cy="21" r="1"/><circle cx="20" cy="21" r="1"/><path d="M1 1h4l2.68 13.39a2 2 0 002 1.61h9.72a2 2 0 002-1.61L23 6H6"/></svg>
           {itemCount > 0 && (
@@ -422,7 +422,7 @@ export default function LandingPage() {
         <div style={{ position:'absolute', top:'15%', left: isAr?'auto':'10%', right: isAr?'10%':'auto', width:500, height:500, borderRadius:'50%', background:'radial-gradient(circle, rgba(36,77,59,.5) 0%, transparent 70%)', pointerEvents:'none' }} />
         <div style={{ position:'absolute', bottom:'10%', right: isAr?'auto':'5%', left: isAr?'5%':'auto', width:350, height:350, borderRadius:'50%', background:'radial-gradient(circle, rgba(175,142,74,.12) 0%, transparent 70%)', pointerEvents:'none' }} />
 
-        <div style={{ maxWidth:1200, width:'100%', margin:'0 auto', padding: isMobile?'100px 20px 60px':'100px 40px 80px', display:'grid', gridTemplateColumns: isDesktop ? '1fr 1fr' : '1fr', gap:40, alignItems:'center' }}>
+        <div style={{ maxWidth:1200, width:'100%', margin:'0 auto', padding: isMobile?'110px 20px 120px':'120px 40px 120px', display:'grid', gridTemplateColumns: isDesktop ? '1fr 1fr' : '1fr', gap:40, alignItems:'center' }}>
 
           {/* Content */}
           <div style={{ order: isAr ? 2 : 1 }}>
@@ -488,14 +488,13 @@ export default function LandingPage() {
             )}
           </div>
 
-          {/* Showcase cards — desktop only */}
-          {isDesktop && (
-            <div data-reveal="hero-cards" style={{ order: isAr?1:2, position:'relative', height:480, display:'flex', alignItems:'center', justifyContent:'center', ...rv('hero-cards', isAr?'left':'right', 150) }}>
-              {/* Glow */}
-              <div style={{ position:'absolute', width:300, height:300, borderRadius:'50%', background:'radial-gradient(circle, rgba(175,142,74,.18) 0%, transparent 70%)', top:'50%', left:'50%', transform:'translate(-50%,-50%)', pointerEvents:'none' }} />
+          {/* Showcase cards */}
+          <div data-reveal="hero-cards" style={{ order: isDesktop ? (isAr?1:2) : 2, position:'relative', height: isDesktop ? 480 : 'auto', padding: isDesktop ? 0 : '10px 0', display:'flex', alignItems:'center', justifyContent:'center', ...rv('hero-cards', isDesktop ? (isAr?'left':'right') : 'up', 150), marginTop: isDesktop ? 0 : (isMobile ? 10 : 30) }}>
+            {/* Glow */}
+            <div style={{ position:'absolute', width:300, height:300, borderRadius:'50%', background:'radial-gradient(circle, rgba(175,142,74,.18) 0%, transparent 70%)', top:'50%', left:'50%', transform:'translate(-50%,-50%)', pointerEvents:'none' }} />
 
-              {/* 4 product cards in a 2×2 staggered grid */}
-              <div style={{ display:'grid', gridTemplateColumns:'1fr 1fr', gap:16, position:'relative', zIndex:1 }}>
+            {/* 4 product cards in a 2×2 staggered grid */}
+            <div style={{ display:'grid', gridTemplateColumns:'1fr 1fr', gap: isMobile ? 12 : 16, position:'relative', zIndex:1 }}>
                 {showcaseProducts.map((p, i) => {
                   const rotations = ['rotate(-2deg)', 'rotate(1.5deg)', 'rotate(2deg)', 'rotate(-1deg)'];
                   const scales    = [1, 1.03, 0.97, 1.02];
@@ -506,7 +505,7 @@ export default function LandingPage() {
                   return (
                     <div key={p.id} onClick={() => router.push(`/products/${p.id}`)}
                       style={{
-                        width:180, height:220, borderRadius:20,
+                        width: isMobile ? 145 : 180, height: isMobile ? 185 : 220, borderRadius:20,
                         background: hasImg
                           ? col0
                           : `linear-gradient(140deg, ${col0}dd, ${col1}88)`,
@@ -554,8 +553,7 @@ export default function LandingPage() {
                   );
                 })}
               </div>
-            </div>
-          )}
+          </div>
         </div>
 
         {/* Scroll hint */}
@@ -770,17 +768,6 @@ export default function LandingPage() {
                 height={isMobile?137:178}
                 style={{ filter:'drop-shadow(0 0 24px rgba(175,142,74,.5))', position:'relative', zIndex:1 }}
               />
-              {/* Bottom tag */}
-              <div style={{ position:'absolute', bottom:20, display:'flex', gap:8 }}>
-                {[
-                  'M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zM4 12c0-1.85.63-3.55 1.69-4.9L16.9 18.31C15.55 19.37 13.85 20 12 20c-4.42 0-8-3.58-8-8zm13.31 4.9L5.69 5.69C7.04 4.63 8.74 4 10.59 4H12c4.42 0 8 3.58 8 8 0 1.85-.63 3.55-1.69 4.9z',
-                  'M12 12c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm0 2c-2.67 0-8 1.34-8 4v2h16v-2c0-2.66-5.33-4-8-4z',
-                  'M19 3H5c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h14c1.1 0 2-.9 2-2V5c0-1.1-.9-2-2-2zm-7 3c1.93 0 3.5 1.57 3.5 3.5S13.93 13 12 13s-3.5-1.57-3.5-3.5S10.07 6 12 6zm7 13H5v-.23c0-.62.28-1.2.76-1.58C7.47 15.82 9.64 15 12 15s4.53.82 6.24 2.19c.48.38.76.97.76 1.58V19z',
-                  'M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm0 18c-4.41 0-8-3.59-8-8s3.59-8 8-8 8 3.59 8 8-3.59 8-8 8zm0-14c-2.21 0-4 1.79-4 4h2c0-1.1.9-2 2-2s2 .9 2 2c0 2-3 1.75-3 5h2c0-2.25 3-2.5 3-5 0-2.21-1.79-4-4-4z',
-                ].map((d,i) => (
-                  <svg key={i} width="20" height="20" viewBox="0 0 24 24" fill="#AF8E4A" style={{ opacity:.5 }}><path d={d}/></svg>
-                ))}
-              </div>
             </div>
           </div>
         </div>

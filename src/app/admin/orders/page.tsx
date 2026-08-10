@@ -31,22 +31,22 @@ const STATUS_META: Record<OrderStatus, { ar: string; fr: string; color: string; 
 
 const STATUS_FLOW: OrderStatus[] = ['pending','reviewing','confirmed','modified','shipped','attempt_failed','delivered','returned','cancelled'];
 
-const NAV = [
-  { id:'dashboard', ar:'الرئيسية',     fr:'Accueil',     href:'/admin/dashboard',
-    iconPath:'M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6' },
-  { id:'orders',    ar:'الطلبات',      fr:'Commandes',   href:'/admin/orders',
-    iconPath:'M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z' },
-  { id:'products',  ar:'المنتجات',     fr:'Produits',    href:'/admin/products',
-    iconPath:'M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4' },
-  { id:'delivery',  ar:'التوصيل',      fr:'Livraison',   href:'/admin/delivery',
-    iconPath:'M13 16V6a1 1 0 00-1-1H4a1 1 0 00-1 1v10a1 1 0 001 1h1m8-1a1 1 0 01-1 1H9m4-1V8a1 1 0 011-1h2.586a1 1 0 01.707.293l3.414 3.414a1 1 0 01.293.707V16a1 1 0 01-1 1h-1m-6-1a1 1 0 001 1h1M5 17a2 2 0 104 0m-4 0a2 2 0 114 0m6 0a2 2 0 104 0m-4 0a2 2 0 114 0' },
-  { id:'promos',    ar:'أكواد الخصم', fr:'Codes promo', href:'/admin/promos',
-    iconPath:'M7 7h.01M7 3h5c.512 0 1.024.195 1.414.586l7 7a2 2 0 010 2.828l-7 7a2 2 0 01-2.828 0l-7-7A2 2 0 013 12V7a4 4 0 014-4z' },
-  { id:'messages',  ar:'الرسائل',      fr:'Messages',    href:'/admin/messages',
-    iconPath:'M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z' },
-  { id:'settings',  ar:'الإعدادات',   fr:'Paramètres',  href:'/admin/settings',
-    iconPath:'M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065zM15 12a3 3 0 11-6 0 3 3 0 016 0z' },
-];
+interface ParsedNotes {
+  text?: string | null;
+  company?: string | null;
+  items?: { name: string; emoji: string; size: string; qty: number; price: number; }[] | null;
+}
+const parseNotes = (notes: string | null): ParsedNotes | null => {
+  if (!notes) return null;
+  if (notes.startsWith('{')) {
+    try {
+      return JSON.parse(notes);
+    } catch {
+      return { text: notes };
+    }
+  }
+  return { text: notes };
+};
 
 function OrdersContent() {
   const router = useRouter();
@@ -59,7 +59,6 @@ function OrdersContent() {
   const [loading,   setLoading]  = useState(true);
   const [statusF,   setStatusF]  = useState<OrderStatus|'all'>('all');
   const [windowW,   setW]        = useState(1200);
-  const [sideOpen,  setSideOpen] = useState(true);
   const [updating,  setUpdating] = useState(false);
   const [toast,     setToast]    = useState('');
   const [notifOpen, setNotif]    = useState(false);
@@ -77,7 +76,6 @@ function OrdersContent() {
     const upd = () => setW(window.innerWidth);
     upd();
     window.addEventListener('resize', upd);
-    if (window.innerWidth < 1024) setSideOpen(false);
     setTimeout(() => setMounted(true), 60);
     const id = searchParams.get('id');
     if (id) setSelected(DEMO_ORDERS.find(o=>o.id===id) ?? null);
@@ -97,7 +95,7 @@ function OrdersContent() {
     };
   }, [router, searchParams]);
 
-  const isMobile  = windowW < 640;
+  const isMobile  = windowW < 768;
   const isDesktop = windowW >= 1024;
   const isAdminAr = adminLang === 'ar';
   const font = isAdminAr ? 'Cairo, sans-serif' : 'Inter, sans-serif';
@@ -546,57 +544,14 @@ function OrdersContent() {
   const deliveredCount = orders.filter(o=>o.status==='delivered').length;
   const pendingCount   = orders.filter(o=>o.status==='pending'||o.status==='reviewing').length;
 
-  const Sidebar = () => (
-    <aside style={{ width: sideOpen?(isMobile?'100%':240):60, flexShrink:0, background:C.sidebar, borderInlineEnd:`1px solid ${C.border}`, display:'flex', flexDirection:'column', transition:'width .3s', position:isMobile&&sideOpen?'fixed':'relative', top:0, bottom:0, zIndex:isMobile&&sideOpen?300:'auto', overflowX:'hidden' }}>
-      <div style={{ padding:'20px 16px', display:'flex', alignItems:'center', gap:10, borderBottom:'1px solid rgba(255,255,255,0.08)', cursor:'pointer' }} onClick={() => setSideOpen(!sideOpen)}>
-        <Image src="/logos/icon-white.svg" alt="إحسان" width={30} height={30} style={{ flexShrink:0 }} />
-        {sideOpen && <div><div style={{ fontWeight:800, fontSize:15, color:'#fff', fontFamily:'Cairo, sans-serif', whiteSpace:'nowrap' }}>إحسان — Admin</div><div style={{ fontSize:9, letterSpacing:2, color:C.gold, fontFamily:'Inter', textTransform:'uppercase' }}>{isAdminAr ? 'لوحة التحكم' : 'Tableau de bord'}</div></div>}
-      </div>
-      <nav style={{ flex:1, padding:'12px 8px', display:'flex', flexDirection:'column', gap:4 }}>
-        {NAV.map(item => {
-          const active = typeof window!=='undefined' && window.location.pathname.startsWith(item.href);
-          return (
-            <button key={item.id} onClick={() => { router.push(item.href); if(isMobile) setSideOpen(false); }} style={{ display:'flex', alignItems:'center', gap:12, padding:'10px 12px', borderRadius:10, cursor:'pointer', background:active?'rgba(175,142,74,0.22)':'transparent', border:active?'1px solid rgba(175,142,74,0.45)':'1px solid transparent', color:active?'#d4a95e':'rgba(255,255,255,0.55)', width:'100%', textAlign: isAdminAr ? 'right' : 'left', transition:'all .2s cubic-bezier(0.22,1,0.36,1)', fontFamily:font, fontSize:13, fontWeight:active?700:400 }}
-              onMouseEnter={e=>{ if(!active) { e.currentTarget.style.background='rgba(255,255,255,0.07)'; e.currentTarget.style.color='rgba(255,255,255,0.85)'; } }}
-              onMouseLeave={e=>{ if(!active) { e.currentTarget.style.background='transparent'; e.currentTarget.style.color='rgba(255,255,255,0.55)'; } }}>
-              <span style={{ flexShrink:0, display:'flex', alignItems:'center', justifyContent:'center', width:18, height:18 }}>
-                <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
-                  <path d={item.iconPath} />
-                </svg>
-              </span>
-              {sideOpen && <span style={{ whiteSpace:'nowrap' }}>{isAdminAr ? item.ar : item.fr}</span>}
-            </button>
-          );
-        })}
-      </nav>
-      <div style={{ padding:'12px 8px', borderTop:'1px solid rgba(255,255,255,0.08)', display:'flex', flexDirection:'column', gap:4 }}>
-        <button onClick={() => router.push('/')} style={{ display:'flex', alignItems:'center', gap:12, padding:'8px 12px', borderRadius:10, background:'transparent', border:'none', color:'rgba(255,255,255,0.5)', cursor:'pointer', fontFamily:font, fontSize:12, width:'100%' }}>
-          <span style={{ flexShrink:0, display:'flex', alignItems:'center', justifyContent:'center', width:18, height:18 }}>
-            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
-              <circle cx="12" cy="12" r="10"/><line x1="2" y1="12" x2="22" y2="12"/>
-              <path d="M12 2a15.3 15.3 0 014 10 15.3 15.3 0 01-4 10 15.3 15.3 0 01-4-10 15.3 15.3 0 014-10z"/>
-            </svg>
-          </span>
-          {sideOpen&&(isAdminAr ? 'عرض الموقع' : 'Voir le site')}
-        </button>
-        <button onClick={() => { sessionStorage.removeItem('ihsen_admin'); router.replace('/admin'); }} style={{ display:'flex', alignItems:'center', gap:12, padding:'8px 12px', borderRadius:10, background:'transparent', border:'none', color:'rgba(239,68,68,0.6)', cursor:'pointer', fontFamily:font, fontSize:12, width:'100%' }}>
-          <span style={{ flexShrink:0, display:'flex', alignItems:'center', justifyContent:'center', width:18, height:18 }}>
-            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
-              <path d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1"/>
-            </svg>
-          </span>
-          {sideOpen&&(isAdminAr ? 'تسجيل الخروج' : 'Déconnexion')}
-        </button>
-      </div>
-    </aside>
-  );
-
   const OrderDetail = ({ o }: { o: Order }) => {
     const meta = STATUS_META[o.status];
-    // Parse cart items if present
-    let cartItems: Array<{name:string;size:string;qty:number;price:number}> = [];
-    try { if (o.items) cartItems = JSON.parse(o.items); } catch { /* empty */ }
-    const hasCart = cartItems.length > 1;
+    
+    const pn = parseNotes(o.notes);
+    const cartItems = pn?.items || [];
+    const hasCart = cartItems.length > 0;
+    const actualNote = pn?.text || null;
+    const deliveryCompany = pn?.company || null;
 
     const SectionLabel = ({ icon, label }: { icon: string; label: string }) => (
       <div style={{ display:'flex', alignItems:'center', gap:8, marginBottom:12 }}>
@@ -628,6 +583,8 @@ function OrdersContent() {
               </div>
             </div>
             <div style={{ display:'flex', flexDirection:'column', alignItems:'flex-end', gap:8 }}>
+              <button onClick={() => setSelected(null)}
+                style={{ background:'rgba(255,255,255,0.1)', border:'1px solid rgba(255,255,255,0.2)', borderRadius:8, width:32, height:32, cursor:'pointer', color:'rgba(255,255,255,.75)', fontSize:18, display:'flex', alignItems:'center', justifyContent:'center', lineHeight:1, flexShrink:0, alignSelf: 'flex-end', marginBottom: 4 }}>×</button>
               <span style={{ background:'rgba(0,0,0,.25)', backdropFilter:'blur(8px)', color: meta.color, border:`1px solid ${meta.color}50`, borderRadius:100, padding:'6px 14px', fontSize:12, fontWeight:700, display:'flex', alignItems:'center', gap:6, whiteSpace:'nowrap' as const }}>
                 <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
                   <path d={STATUS_ICON[o.status]}/>
@@ -698,6 +655,7 @@ function OrdersContent() {
                 { icon:'M3 5a2 2 0 012-2h3.28a1 1 0 01.948.684l1.498 4.493a1 1 0 01-.502 1.21l-2.257 1.13a11.042 11.042 0 005.516 5.516l1.13-2.257a1 1 0 011.21-.502l4.493 1.498a1 1 0 01.684.949V19a2 2 0 01-2 2h-1C9.716 21 3 14.284 3 6V5z', label:isAdminAr?'رقم الهاتف':'Téléphone', value:o.phone },
                 { icon:'M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0zM15 11a3 3 0 11-6 0 3 3 0 016 0z', label:isAdminAr?'الولاية / البلدية':'Wilaya / Commune', value:`${o.wilaya} — ${o.commune}` },
                 { icon:'M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0zM15 11a3 3 0 11-6 0 3 3 0 016 0z', label:isAdminAr?'العنوان':'Adresse', value:o.address },
+                ...(deliveryCompany ? [{ icon:'M9 17a2 2 0 11-4 0 2 2 0 014 0zM19 17a2 2 0 11-4 0 2 2 0 014 0zM13 16V6a1 1 0 00-1-1H4a1 1 0 00-1 1v10a1 1 0 001 1h1m8-1a1 1 0 01-1 1H9m4-1h2m-6-11h8m-8 2h8m-8 2h8m2-6h3.28a1 1 0 01.948.684l1.498 4.493a1 1 0 01-.502 1.21l-2.257 1.13a11.042 11.042 0 005.516 5.516l1.13-2.257a1 1 0 011.21-.502l4.493 1.498a1 1 0 01.684.949V19a2 2 0 01-2 2h-1', label:isAdminAr?'شركة التوصيل':'Société de livraison', value:deliveryCompany }] : []),
                 { icon:'M8 7h12m0 0l-4-4m4 4l-4 4m0 6H4m0 0l4 4m-4-4l4-4', label:isAdminAr?'طريقة التوصيل':'Mode de livraison', value:o.delivery_type==='home'?(isAdminAr?'توصيل للمنزل':'Livraison à domicile'):(isAdminAr?'استلام من المكتب':'Retrait en agence') },
               ].map((row, i, arr) => (
                 <div key={i} style={{ display:'flex', alignItems:'flex-start', gap:12, padding:'11px 14px', borderBottom: i < arr.length-1 ? `1px solid ${C.border}` : 'none' }}>
@@ -712,14 +670,14 @@ function OrdersContent() {
                   </div>
                 </div>
               ))}
-              {o.notes && (
+              {actualNote && (
                 <div style={{ padding:'10px 14px', background:'#FEF9EC', borderTop:`1px solid #F59E0B30`, display:'flex', gap:10 }}>
                   <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#F59E0B" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" style={{ flexShrink:0, marginTop:2 }}>
                     <path d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/>
                   </svg>
                   <div>
                     <div style={{ fontSize:10, color:'#B45309', fontWeight:700, marginBottom:2 }}>{isAdminAr ? 'ملاحظة' : 'Note'}</div>
-                    <div style={{ fontSize:12, color:'#92400E' }}>{o.notes}</div>
+                    <div style={{ fontSize:12, color:'#92400E', whiteSpace:'pre-wrap' }}>{actualNote}</div>
                   </div>
                 </div>
               )}
@@ -733,10 +691,8 @@ function OrdersContent() {
               {hasCart
                 ? cartItems.map((item, i) => (
                     <div key={i} style={{ background:C.card2, border:`1px solid ${C.border}`, borderRadius:12, padding:'12px 14px', display:'flex', alignItems:'center', gap:12 }}>
-                      <div style={{ width:38, height:38, borderRadius:10, background:`${C.green}18`, display:'flex', alignItems:'center', justifyContent:'center', flexShrink:0 }}>
-                        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke={C.green} strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
-                          <path d="M6 2L3 6v14a2 2 0 002 2h14a2 2 0 002-2V6l-3-4z"/><line x1="3" y1="6" x2="21" y2="6"/><path d="M16 10a4 4 0 01-8 0"/>
-                        </svg>
+                      <div style={{ width:38, height:38, borderRadius:10, background:`${C.green}18`, border:`1px solid ${C.border}`, display:'flex', alignItems:'center', justifyContent:'center', flexShrink:0, fontSize:18 }}>
+                        {item.emoji || '🛍️'}
                       </div>
                       <div style={{ flex:1 }}>
                         <div style={{ fontSize:13, fontWeight:700, color:C.text }}>{item.name}</div>
@@ -867,22 +823,14 @@ function OrdersContent() {
         .ihsen-pulse-dot  { animation: ihsen-pulse-dot 2s ease-in-out infinite; }
         @keyframes ihsen-shimmer { from{background-position:200% 0} to{background-position:-200% 0} }
       `}</style>
-      {isMobile && sideOpen && <div onClick={() => setSideOpen(false)} style={{ position:'fixed', inset:0, background:'rgba(0,0,0,.6)', zIndex:200 }} />}
-      <Sidebar />
 
       <div style={{ flex:1, display:'flex', flexDirection:'column', overflow:'hidden' }}>
         {/* Topbar */}
         <div className="ihsen-topbar" style={{ background:'#ffffff', borderBottom:`1px solid ${C.border}`, padding:'10px 20px', display:'flex', alignItems:'center', justifyContent:'space-between', position:'sticky', top:0, zIndex:100, boxShadow:'0 1px 8px rgba(36,77,59,.05)' }}>
           <div style={{ display:'flex', alignItems:'center', gap:12 }}>
-            {!isDesktop && (
-              <button onClick={() => setSideOpen(!sideOpen)} style={{ background:'none', border:'none', cursor:'pointer', color:C.muted, display:'flex', alignItems:'center', justifyContent:'center', width:34, height:34, borderRadius:8, transition:'background .15s' }}
-                onMouseEnter={e => e.currentTarget.style.background = C.border}
-                onMouseLeave={e => e.currentTarget.style.background = 'transparent'}>
-                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                  <line x1="3" y1="6" x2="21" y2="6"/><line x1="3" y1="12" x2="21" y2="12"/><line x1="3" y1="18" x2="21" y2="18"/>
-                </svg>
-              </button>
-            )}
+            <div style={{ width:36, height:36, borderRadius:10, background:`linear-gradient(135deg, ${C.green}, #1D4939)`, display:'flex', alignItems:'center', justifyContent:'center', flexShrink:0 }}>
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="rgba(255,255,255,.85)" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/></svg>
+            </div>
             <div>
               <div style={{ fontSize:15, fontWeight:800, color:C.text, lineHeight:1.2 }}>{isAdminAr ? 'إدارة الطلبات' : 'Commandes'}</div>
               <div style={{ fontSize:10.5, color:C.sub, marginTop:1 }}>{filtered.length} {isAdminAr ? 'طلب' : 'commandes'}</div>
@@ -939,6 +887,14 @@ function OrdersContent() {
                 </>
               )}
             </div>
+            {/* Messages */}
+            <button onClick={() => router.push('/admin/messages')} style={{ width:34, height:34, borderRadius:8, border:`1px solid ${C.border}`, background:'transparent', cursor:'pointer', color:C.muted, display:'flex', alignItems:'center', justifyContent:'center', transition:'all .15s' }}
+              onMouseEnter={e => { e.currentTarget.style.background = C.card2; e.currentTarget.style.color = C.green; }}
+              onMouseLeave={e => { e.currentTarget.style.background = 'transparent'; e.currentTarget.style.color = C.muted; }}>
+              <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                <path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"/><polyline points="22,6 12,13 2,6"/>
+              </svg>
+            </button>
             <div style={{ position:'relative' }}>
               <button onClick={() => setNotif(v => !v)} style={{ width:34, height:34, borderRadius:8, border:`1px solid ${notifOpen ? C.gold : C.border}`, background: notifOpen ? `${C.gold}12` : 'transparent', cursor:'pointer', color: notifOpen ? C.gold : C.muted, display:'flex', alignItems:'center', justifyContent:'center', position:'relative', transition:'all .15s' }}
                 onMouseEnter={e => { if(!notifOpen){ e.currentTarget.style.background = C.card2; e.currentTarget.style.color = C.green; } }}
@@ -1081,7 +1037,7 @@ function OrdersContent() {
                 <input value={search} onChange={e => setSearch(e.target.value)} placeholder={isAdminAr ? 'ابحث: رقم طلب، اسم، هاتف...' : 'Rechercher...'} style={{ width:'100%', boxSizing:'border-box', padding:'9px 36px 9px 12px', borderRadius:10, border:`1px solid ${C.border}`, background:C.card, color:C.text, fontSize:12, outline:'none', fontFamily:font }} />
                 <span style={{ position:'absolute', top:'50%', transform:'translateY(-50%)', right:11, fontSize:12, color:C.muted }}>⌕</span>
               </div>
-              <select value={statusF} onChange={e => setStatusF(e.target.value as OrderStatus|'all')} style={{ padding:'9px 12px', borderRadius:10, border:`1px solid ${C.border}`, background:C.card, color:C.text, fontSize:12, fontFamily:font, outline:'none', cursor:'pointer' }}>
+              <select value={statusF} onChange={e => setStatusF(e.target.value as OrderStatus|'all')} style={{ padding:'9px 12px', paddingInlineEnd:28, borderRadius:10, border:`1px solid ${C.border}`, background:C.card, color:C.text, fontSize:12, fontFamily:font, outline:'none', cursor:'pointer' }}>
                 <option value="all">{isAdminAr ? 'كل الحالات' : 'Tous les statuts'}</option>
                 {STATUS_FLOW.map(s => <option key={s} value={s}>{isAdminAr ? STATUS_META[s].ar : STATUS_META[s].fr}</option>)}
               </select>
@@ -1147,7 +1103,7 @@ function OrdersContent() {
                               <span style={{ background:meta.bg, color:meta.color, borderRadius:100, padding:'2px 8px', fontSize:10, fontWeight:700 }}>{isAdminAr ? meta.ar : meta.fr}</span>
                             </div>
                             <div style={{ fontSize:12, color:C.text, marginTop:2 }}>{o.customer_name} · {o.phone}</div>
-                            <div style={{ fontSize:11, color:C.muted, marginTop:1 }}>{o.product_name.split('—')[0].trim()} · {o.wilaya}</div>
+                            <div style={{ fontSize:11, color:C.muted, marginTop:1 }}>{parseNotes(o.notes)?.items ? `منتجات متعددة (${parseNotes(o.notes)!.items!.length})` : o.product_name.split('—')[0].trim()} · {o.wilaya}</div>
                           </div>
                         </div>
                         <div style={{ textAlign:'left', flexShrink:0 }}>
@@ -1209,7 +1165,7 @@ function OrdersContent() {
                                     <span style={{ fontSize:13, fontWeight:800, color:C.gold, fontFamily:'Inter' }}>{o.order_num}</span>
                                   </div>
                                   <div style={{ fontSize:12, color:C.text, marginTop:2 }}>{o.customer_name} · {o.phone}</div>
-                                  <div style={{ fontSize:11, color:C.muted, marginTop:1 }}>{o.product_name.split('—')[0].trim()} · {o.wilaya}</div>
+                                  <div style={{ fontSize:11, color:C.muted, marginTop:1 }}>{parseNotes(o.notes)?.items ? `منتجات متعددة (${parseNotes(o.notes)!.items!.length})` : o.product_name.split('—')[0].trim()} · {o.wilaya}</div>
                                 </div>
                               </div>
                               <div style={{ textAlign:'left', flexShrink:0 }}>
@@ -1231,7 +1187,7 @@ function OrdersContent() {
           {isDesktop && (
             <div style={{ width:360, flexShrink:0, position:'sticky', top:0 }}>
               {selected
-                ? <div key={selected.id} style={{ animation:'ihsen-panel-slide 0.32s cubic-bezier(0.22,1,0.36,1) both' }}>
+                ? <div key={selected.id} className={isAdminAr ? 'panel-anim-desktop-ar' : 'panel-anim-desktop-fr'}>
                     <OrderDetail o={selected} />
                   </div>
                 : (
@@ -1282,6 +1238,7 @@ function OrdersContent() {
           {toast}
         </div>
       )}
+      
     </div>
   );
 }

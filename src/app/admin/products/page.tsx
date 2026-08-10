@@ -1,6 +1,6 @@
 'use client';
 import { useEffect, useState, useRef, type CSSProperties } from 'react';
-import { useRouter } from 'next/navigation';
+import { useRouter, useSearchParams } from 'next/navigation';
 import Image from 'next/image';
 import { supabase, type Product } from '@/lib/supabase';
 
@@ -55,22 +55,6 @@ const BADGES = [
   { val:'hot',  ar:'رائج',    color:'#EF4444' },
   { val:'sale', ar:'تخفيض',   color:'#F59E0B' },
 ];
-const NAV = [
-  { id:'dashboard', ar:'الرئيسية',     fr:'Accueil',      href:'/admin/dashboard',
-    iconPath:'M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6' },
-  { id:'orders',    ar:'الطلبات',      fr:'Commandes',    href:'/admin/orders',
-    iconPath:'M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z' },
-  { id:'products',  ar:'المنتجات',     fr:'Produits',     href:'/admin/products',
-    iconPath:'M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4' },
-  { id:'delivery',  ar:'التوصيل',      fr:'Livraison',    href:'/admin/delivery',
-    iconPath:'M13 16V6a1 1 0 00-1-1H4a1 1 0 00-1 1v10a1 1 0 001 1h1m8-1a1 1 0 01-1 1H9m4-1V8a1 1 0 011-1h2.586a1 1 0 01.707.293l3.414 3.414a1 1 0 01.293.707V16a1 1 0 01-1 1h-1m-6-1a1 1 0 001 1h1M5 17a2 2 0 104 0m-4 0a2 2 0 114 0m6 0a2 2 0 104 0m-4 0a2 2 0 114 0' },
-  { id:'promos',    ar:'أكواد الخصم', fr:'Codes promo',  href:'/admin/promos',
-    iconPath:'M7 7h.01M7 3h5c.512 0 1.024.195 1.414.586l7 7a2 2 0 010 2.828l-7 7a2 2 0 01-2.828 0l-7-7A2 2 0 013 12V7a4 4 0 014-4z' },
-  { id:'messages',  ar:'الرسائل',      fr:'Messages',     href:'/admin/messages',
-    iconPath:'M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z' },
-  { id:'settings',  ar:'الإعدادات',   fr:'Paramètres',   href:'/admin/settings',
-    iconPath:'M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065zM15 12a3 3 0 11-6 0 3 3 0 016 0z' },
-];
 
 type ToastType = 'success' | 'error' | 'warning' | 'info';
 interface ToastItem { id: number; msg: string; type: ToastType; }
@@ -85,13 +69,13 @@ let _toastId = 0;
 
 export default function AdminProductsPage() {
   const router = useRouter();
+  const searchParams = useSearchParams();
 
   const [products,   setProducts]   = useState<Product[]>([]);
   const [loading,    setLoading]    = useState(true);
   const [form,       setForm]       = useState<ProductForm|null>(null);
   const [editId,     setEditId]     = useState<number|null>(null);
   const [colorPick,  setColorPick]  = useState('#244D3B');
-  const [sideOpen,   setSideOpen]   = useState(true);
   const [panelOpen,  setPanelOpen]  = useState(false);
   const [windowW,    setW]          = useState(1200);
   const [toasts,     setToasts]     = useState<ToastItem[]>([]);
@@ -158,11 +142,19 @@ export default function AdminProductsPage() {
     setAdminLang((localStorage.getItem('ihsen_admin_lang') as 'ar'|'fr') ?? 'ar');
     const upd = () => setW(window.innerWidth);
     upd(); window.addEventListener('resize', upd);
-    if (window.innerWidth < 1024) setSideOpen(false);
     load();
     setTimeout(() => setMounted(true), 60);
     return () => window.removeEventListener('resize', upd);
   }, [router]);
+
+  useEffect(() => {
+    if (searchParams?.get('action') === 'add') {
+      setForm({ ...EMPTY });
+      setEditId(null);
+      setPanelOpen(true);
+      router.replace('/admin/products');
+    }
+  }, [searchParams, router]);
 
   const isMobile   = windowW < 640;
   const isDesktop  = windowW >= 1024;
@@ -410,53 +402,6 @@ export default function AdminProductsPage() {
     showToast(isAdminAr ? 'تم حذف المنتج' : 'Produit supprimé', 'info');
   };
 
-  // ── Sidebar ───────────────────────────────────────────────
-  const Sidebar = () => (
-    <aside style={{ width:sideOpen?(isMobile?'100%':240):(isMobile?0:60), flexShrink:0, background:C.sidebar, borderInlineEnd:`1px solid ${C.border}`, display:'flex', flexDirection:'column', transition:'width .3s', position:isMobile?'fixed':'relative', top:0, bottom:0, zIndex:isMobile?300:'auto', overflowX:'hidden', visibility:isMobile&&!sideOpen?'hidden':'visible' }}>
-      <div style={{ padding:'20px 16px', display:'flex', alignItems:'center', gap:10, borderBottom:'1px solid rgba(255,255,255,0.08)', cursor:'pointer' }} onClick={() => setSideOpen(!sideOpen)}>
-        <Image src="/logos/icon-white.svg" alt="إحسان" width={30} height={30} style={{ flexShrink:0 }} />
-        {sideOpen && <div><div style={{ fontWeight:800, fontSize:15, color:'#fff', fontFamily:font, whiteSpace:'nowrap' }}>إحسان — Admin</div><div style={{ fontSize:9, letterSpacing:2, color:C.gold, fontFamily:'Inter', textTransform:'uppercase' }}>{isAdminAr ? 'لوحة التحكم' : 'Tableau de bord'}</div></div>}
-      </div>
-      <nav style={{ flex:1, padding:'12px 8px', display:'flex', flexDirection:'column', gap:4 }}>
-        {NAV.map(item => {
-          const active = typeof window!=='undefined' && window.location.pathname.startsWith(item.href);
-          return (
-            <button key={item.id} onClick={() => { router.push(item.href); if(isMobile) setSideOpen(false); }}
-              style={{ display:'flex', alignItems:'center', gap:12, padding:'10px 12px', borderRadius:10, cursor:'pointer', background:active?'rgba(175,142,74,0.22)':'transparent', border:active?'1px solid rgba(175,142,74,0.45)':'1px solid transparent', color:active?'#d4a95e':'rgba(255,255,255,0.55)', width:'100%', textAlign: isAdminAr ? 'right' : 'left', transition:'all .2s cubic-bezier(0.22,1,0.36,1)', fontFamily:font, fontSize:13, fontWeight:active?700:400 }}
-              onMouseEnter={e=>{ if(!active) e.currentTarget.style.background='rgba(255,255,255,0.07)'; }}
-              onMouseLeave={e=>{ if(!active) e.currentTarget.style.background='transparent'; }}>
-              <span style={{ flexShrink:0, display:'flex', alignItems:'center', justifyContent:'center', width:18, height:18 }}>
-                <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
-                  <path d={item.iconPath} />
-                </svg>
-              </span>
-              {sideOpen && <span style={{ whiteSpace:'nowrap' }}>{isAdminAr ? item.ar : item.fr}</span>}
-            </button>
-          );
-        })}
-      </nav>
-      <div style={{ padding:'12px 8px', borderTop:'1px solid rgba(255,255,255,0.08)', display:'flex', flexDirection:'column', gap:4 }}>
-        <button onClick={() => router.push('/')} style={{ display:'flex', alignItems:'center', gap:12, padding:'8px 12px', borderRadius:10, background:'transparent', border:'none', color:'rgba(255,255,255,0.5)', cursor:'pointer', fontFamily:font, fontSize:12, width:'100%' }}>
-          <span style={{ flexShrink:0, display:'flex', alignItems:'center', justifyContent:'center', width:18, height:18 }}>
-            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
-              <circle cx="12" cy="12" r="10"/><line x1="2" y1="12" x2="22" y2="12"/>
-              <path d="M12 2a15.3 15.3 0 014 10 15.3 15.3 0 01-4 10 15.3 15.3 0 01-4-10 15.3 15.3 0 014-10z"/>
-            </svg>
-          </span>
-          {sideOpen && (isAdminAr ? 'عرض الموقع' : 'Voir le site')}
-        </button>
-        <button onClick={() => { sessionStorage.removeItem('ihsen_admin'); router.replace('/admin'); }} style={{ display:'flex', alignItems:'center', gap:12, padding:'8px 12px', borderRadius:10, background:'transparent', border:'none', color:'rgba(239,68,68,0.6)', cursor:'pointer', fontFamily:font, fontSize:12, width:'100%' }}>
-          <span style={{ flexShrink:0, display:'flex', alignItems:'center', justifyContent:'center', width:18, height:18 }}>
-            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
-              <path d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1"/>
-            </svg>
-          </span>
-          {sideOpen && (isAdminAr ? 'تسجيل الخروج' : 'Déconnexion')}
-        </button>
-      </div>
-    </aside>
-  );
-
   // ── Form Panel helpers ────────────────────────────────────────────────────────
   const pSL = (iconPath: string, label: string) => (
     <div style={{ display:'flex', alignItems:'center', gap:7, marginBottom:12 }}>
@@ -476,7 +421,7 @@ export default function AdminProductsPage() {
 
   // ── Form Panel JSX (inline — NOT a component to avoid focus loss) ──────────
   const formPanelJSX = form ? (
-    <div style={{ width:isDesktop?360:'100%', flexShrink:0, background:C.card, borderInlineStart:isDesktop?`1px solid ${C.border}`:'none', display:'flex', flexDirection:'column', overflow:'hidden' }}>
+    <div className={isDesktop ? (isAdminAr ? 'panel-anim-desktop-ar' : 'panel-anim-desktop-fr') : ''} style={{ width:isDesktop?360:'100%', flexShrink:0, background:C.card, borderInlineStart:isDesktop?`1px solid ${C.border}`:'none', display:'flex', flexDirection:'column', overflow:'hidden' }}>
 
       {/* ── Hero header ── */}
       <div style={{ background:`linear-gradient(135deg, ${C.green} 0%, #1D4939 100%)`, padding:'18px 18px 16px', flexShrink:0, position:'relative', overflow:'hidden' }}>
@@ -809,7 +754,7 @@ export default function AdminProductsPage() {
   // ── View Panel JSX (read-only product detail) ─────────────
   const viewProduct = products.find(p => p.id === viewId) ?? null;
   const viewPanelJSX = viewProduct && !panelOpen ? (
-    <div style={{ width:isDesktop?360:'100%', flexShrink:0, background:C.card, borderInlineStart:isDesktop?`1px solid ${C.border}`:'none', display:'flex', flexDirection:'column', overflow:'hidden' }}>
+    <div className={isDesktop ? (isAdminAr ? 'panel-anim-desktop-ar' : 'panel-anim-desktop-fr') : ''} style={{ width:isDesktop?360:'100%', flexShrink:0, background:C.card, borderInlineStart:isDesktop?`1px solid ${C.border}`:'none', display:'flex', flexDirection:'column', overflow:'hidden' }}>
       {/* Header */}
       <div style={{ background:`linear-gradient(135deg, ${C.green} 0%, #1D4939 100%)`, padding:'18px 18px 16px', flexShrink:0, position:'relative', overflow:'hidden' }}>
         <div style={{ position:'absolute', insetInlineEnd:-20, top:-20, width:100, height:100, borderRadius:'50%', background:'rgba(175,142,74,0.12)', pointerEvents:'none' }} />
@@ -934,28 +879,20 @@ export default function AdminProductsPage() {
 
   // ── Render ────────────────────────────────────────────────
   return (
-    <div style={{ display:'flex', height:'100vh', background:C.bg, fontFamily:font, direction:dir, overflow:'hidden' }}>
-      <Sidebar />
-      {isMobile && sideOpen && <div onClick={()=>setSideOpen(false)} style={{ position:'fixed', inset:0, background:'#00000060', zIndex:299 }} />}
-
-      {/* Main content */}
-      <div style={{ flex:1, overflow:'hidden', display:'flex', flexDirection:'column' }}>
-
-        {/* Header */}
-        <div style={{ padding:isMobile?'14px 12px':'18px 24px', borderBottom:`1px solid ${C.border}`, display:'flex', alignItems:'center', justifyContent:'space-between', flexShrink:0, background:'#ffffff', boxShadow:'0 1px 0 rgba(36,77,59,.06)' }}>
-          <div style={{ display:'flex', alignItems:'center', gap:10 }}>
-            {isMobile && <button onClick={()=>setSideOpen(true)} style={{ background:'none', border:`1px solid ${C.border}`, borderRadius:8, padding:'5px 9px', cursor:'pointer', color:C.text, fontSize:16 }}>☰</button>}
-            <div>
-              <h1 style={{ fontSize:isMobile?15:18, fontWeight:800, color:C.text, margin:0, fontFamily:font }}>{isAdminAr ? 'إدارة المنتجات' : 'Produits'}</h1>
-              <p style={{ fontSize:11, color:C.muted, margin:0, fontFamily:font }}>{products.length} {isAdminAr ? 'منتج في الكتالوج' : 'produit(s)'}</p>
-            </div>
-          </div>
-          <button onClick={openAdd}
-            style={{ background:`linear-gradient(135deg, ${C.gold}, #8B6D35)`, border:'none', borderRadius:10, padding:isMobile?'8px 12px':'10px 18px', color:'#fff', fontFamily:font, fontSize:isMobile?12:13, fontWeight:800, cursor:'pointer', whiteSpace:'nowrap' }}>
-            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
-            {!isMobile && (isAdminAr ? ' إضافة منتج' : ' Ajouter un produit')}
-          </button>
+    <div style={{ flex:1, overflow:'hidden', display:'flex', flexDirection:'column' }}>
+      
+      {/* Header Actions */}
+      <div style={{ padding:isMobile?'14px 12px':'18px 24px', display:'flex', alignItems:'center', justifyContent:'space-between', flexShrink:0 }}>
+        <div>
+          <h1 style={{ fontSize:isMobile?18:22, fontWeight:800, color:C.text, margin:0, fontFamily:font }}>{isAdminAr ? 'إدارة المنتجات' : 'Produits'}</h1>
+          <p style={{ fontSize:12, color:C.sub, margin:0, fontFamily:font, marginTop:4 }}>{products.length} {isAdminAr ? 'منتج في الكتالوج' : 'produit(s)'}</p>
         </div>
+        <button onClick={openAdd}
+          style={{ background:`linear-gradient(135deg, ${C.gold}, #8B6D35)`, border:'none', borderRadius:10, padding:isMobile?'10px 14px':'12px 20px', color:'#fff', fontFamily:font, fontSize:isMobile?12:13, fontWeight:800, cursor:'pointer', whiteSpace:'nowrap', display:'flex', alignItems:'center', gap:6 }}>
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+          {!isMobile && (isAdminAr ? 'إضافة منتج' : 'Ajouter un produit')}
+        </button>
+      </div>
 
         {/* Body */}
         <div style={{ flex:1, display:'flex', overflow:'hidden' }}>
@@ -1185,13 +1122,12 @@ export default function AdminProductsPage() {
           {/* Right panel — desktop */}
           {isDesktop && (panelOpen ? formPanelJSX : viewPanelJSX)}
         </div>
-      </div>
 
       {/* Form panel — mobile / tablet bottom sheet */}
       {!isDesktop && panelOpen && form && (
         <div style={{ position:'fixed', inset:0, zIndex:400, display:'flex', flexDirection:'column', justifyContent:'flex-end' }}>
-          <div onClick={()=>{ setForm(null); setPanelOpen(false); }} style={{ flex:1, background:'#00000070' }} />
-          <div style={{ background:C.card, borderTop:`1px solid ${C.border}`, borderTopLeftRadius:20, borderTopRightRadius:20, maxHeight:'88vh', overflowY:'auto' }}>
+          <div onClick={()=>{ setForm(null); setPanelOpen(false); }} style={{ flex:1, background:'#00000070', animation: 'ihsenFadeIn 0.3s ease' }} />
+          <div className="panel-anim-mobile" style={{ background:C.card, borderTop:`1px solid ${C.border}`, borderTopLeftRadius:24, borderTopRightRadius:24, maxHeight:'88vh', overflowY:'auto' }}>
             <div style={{ padding:'10px 0 0', display:'flex', justifyContent:'center' }}>
               <div style={{ width:36, height:4, borderRadius:2, background:C.border }} />
             </div>
@@ -1203,8 +1139,8 @@ export default function AdminProductsPage() {
       {/* View panel — mobile / tablet bottom sheet */}
       {!isDesktop && viewId !== null && !panelOpen && viewPanelJSX && (
         <div style={{ position:'fixed', inset:0, zIndex:400, display:'flex', flexDirection:'column', justifyContent:'flex-end' }}>
-          <div onClick={()=>setViewId(null)} style={{ flex:1, background:'#00000070' }} />
-          <div style={{ background:C.card, borderTop:`1px solid ${C.border}`, borderTopLeftRadius:20, borderTopRightRadius:20, maxHeight:'88vh', overflowY:'auto' }}>
+          <div onClick={()=>setViewId(null)} style={{ flex:1, background:'#00000070', animation: 'ihsenFadeIn 0.3s ease' }} />
+          <div className="panel-anim-mobile" style={{ background:C.card, borderTop:`1px solid ${C.border}`, borderTopLeftRadius:24, borderTopRightRadius:24, maxHeight:'88vh', overflowY:'auto' }}>
             <div style={{ padding:'10px 0 0', display:'flex', justifyContent:'center' }}>
               <div style={{ width:36, height:4, borderRadius:2, background:C.border }} />
             </div>
