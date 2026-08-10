@@ -1,5 +1,5 @@
 'use client';
-import { useState, useEffect } from 'react';
+import { useState, useEffect, Suspense } from 'react';
 import { usePathname, useRouter } from 'next/navigation';
 import Image from 'next/image';
 import { supabase, Order } from '@/lib/supabase';
@@ -269,7 +269,9 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
 
         {/* Page Content with key to trigger animation on route change */}
         <div key={pathname} className="page-transition main-scroll" style={{ flex: 1, overflowY: 'auto' }}>
-          {children}
+          <Suspense fallback={<div style={{ padding: 40, textAlign: 'center', opacity: 0.5 }}>Loading...</div>}>
+            {children}
+          </Suspense>
         </div>
 
         {/* Bottom Nav for Mobile/Tablet */}

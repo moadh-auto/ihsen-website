@@ -298,7 +298,7 @@ function OrderContent() {
       });
       if (error) {
         console.error('Supabase insert error:', error.message);
-        alert(isAdminAr ? 'حدث خطأ أثناء حفظ الطلب. يرجى المحاولة مرة أخرى.' : 'Erreur lors de l\'enregistrement. Veuillez réessayer.');
+        alert(isAr ? 'حدث خطأ أثناء حفظ الطلب. يرجى المحاولة مرة أخرى.' : 'Erreur lors de l\'enregistrement. Veuillez réessayer.');
         setLoading(false);
         return;
       }
