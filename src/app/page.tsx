@@ -20,6 +20,7 @@ export default function LandingPage() {
   const [windowWidth, setWindowWidth] = useState(1200);
   const [hoveredCard, setHoveredCard] = useState<number|null>(null);
   const [navScrolled, setNavScrolled] = useState(false);
+  const [social, setSocial] = useState({ instagram:'', facebook:'', tiktok:'', whatsapp:'' });
 
   const { itemCount, openCart } = useCart();
 
@@ -58,11 +59,16 @@ export default function LandingPage() {
 
     // Fetch real products from Supabase
     const minDelay = new Promise(r => setTimeout(r, 700)); // minimum loader time
-    const fetch    = supabase.from('products').select('*')
+    const fetchProd = supabase.from('products').select('*')
       .eq('active', true).order('sort_order', { ascending: true });
+    
+    const fetchSoc = supabase.from('site_settings').select('value').eq('key', 'social_links').maybeSingle();
 
-    Promise.all([minDelay, fetch]).then(([, { data }]) => {
-      if (data && data.length > 0) setProducts(data as DbProduct[]);
+    Promise.all([minDelay, fetchProd, fetchSoc]).then(([, { data: pData }, { data: sData }]) => {
+      if (pData && pData.length > 0) setProducts(pData as DbProduct[]);
+      if (sData?.value) {
+        try { setSocial({ ...social, ...JSON.parse(sData.value) }); } catch {}
+      }
       setProdLoad(false);
       setLoader('out');
       loaderTimer.current = setTimeout(() => setLoader('gone'), 600);
@@ -1022,13 +1028,27 @@ export default function LandingPage() {
             <span style={{ fontSize:11, color:'rgba(255,255,255,.25)', fontFamily:font }}>
               © 2026 إحسان — جميع الحقوق محفوظة
             </span>
-            <div style={{ display:'flex', gap:12 }}>
-              {[
-                'M12 2a10 10 0 00-6.88 17.28C6.78 17.1 9.27 16 12 16s5.22 1.1 6.88 2.28A10 10 0 0012 2z',
-                'M20.84 4.61a5.5 5.5 0 00-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 00-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 000-7.78z',
-              ].map((d,i) => (
-                <svg key={i} width="16" height="16" viewBox="0 0 24 24" fill="#AF8E4A" style={{ opacity:.35 }}><path d={d}/></svg>
-              ))}
+            <div style={{ display:'flex', gap:16, alignItems:'center' }}>
+              {social.instagram && (
+                <a href={social.instagram} target="_blank" rel="noopener noreferrer" style={{ color:'#AF8E4A', opacity:0.5, transition:'opacity 0.2s' }} onMouseEnter={e=>e.currentTarget.style.opacity='1'} onMouseLeave={e=>e.currentTarget.style.opacity='0.5'}>
+                  <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><rect x="2" y="2" width="20" height="20" rx="5" ry="5"></rect><path d="M16 11.37A4 4 0 1 1 12.63 8 4 4 0 0 1 16 11.37z"></path><line x1="17.5" y1="6.5" x2="17.51" y2="6.5"></line></svg>
+                </a>
+              )}
+              {social.facebook && (
+                <a href={social.facebook} target="_blank" rel="noopener noreferrer" style={{ color:'#AF8E4A', opacity:0.5, transition:'opacity 0.2s' }} onMouseEnter={e=>e.currentTarget.style.opacity='1'} onMouseLeave={e=>e.currentTarget.style.opacity='0.5'}>
+                  <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M18 2h-3a5 5 0 0 0-5 5v3H7v4h3v8h4v-8h3l1-4h-4V7a1 1 0 0 1 1-1h3z"></path></svg>
+                </a>
+              )}
+              {social.tiktok && (
+                <a href={social.tiktok} target="_blank" rel="noopener noreferrer" style={{ color:'#AF8E4A', opacity:0.5, transition:'opacity 0.2s' }} onMouseEnter={e=>e.currentTarget.style.opacity='1'} onMouseLeave={e=>e.currentTarget.style.opacity='0.5'}>
+                  <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M9 12a4 4 0 1 0 4 4V4a5 5 0 0 0 5 5"></path></svg>
+                </a>
+              )}
+              {social.whatsapp && (
+                <a href={social.whatsapp} target="_blank" rel="noopener noreferrer" style={{ color:'#AF8E4A', opacity:0.5, transition:'opacity 0.2s' }} onMouseEnter={e=>e.currentTarget.style.opacity='1'} onMouseLeave={e=>e.currentTarget.style.opacity='0.5'}>
+                  <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72 12.84 12.84 0 0 0 .7 2.81 2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45 12.84 12.84 0 0 0 2.81.7A2 2 0 0 1 22 16.92z"></path></svg>
+                </a>
+              )}
             </div>
           </div>
         </div>

@@ -29,6 +29,7 @@ export default function ProductPage() {
   const [theme, setTheme] = useState('light');
   const [sizeChartOpen, setSizeChartOpen] = useState(false);
   const [windowWidth, setWindowWidth] = useState(1200);
+  const [social, setSocial] = useState({ instagram:'', facebook:'', tiktok:'', whatsapp:'' });
 
   // Real product from Supabase
   const [dbProduct, setDbProduct]     = useState<DbProduct | null>(null);
@@ -51,11 +52,16 @@ export default function ProductPage() {
     document.querySelectorAll('.reveal').forEach(el => io.observe(el));
 
     // Fetch real product from Supabase
-    void supabase.from('products').select('*').eq('id', id).single()
-      .then(({ data }) => {
-        if (data) setDbProduct(data as DbProduct);
-        setProdLoad(false);
-      });
+    const fetchProd = supabase.from('products').select('*').eq('id', id).single();
+    const fetchSoc = supabase.from('site_settings').select('value').eq('key', 'social_links').maybeSingle();
+
+    Promise.all([fetchProd, fetchSoc]).then(([{ data: pData }, { data: sData }]) => {
+      if (pData) setDbProduct(pData as DbProduct);
+      if (sData?.value) {
+        try { setSocial({ ...social, ...JSON.parse(sData.value) }); } catch {}
+      }
+      setProdLoad(false);
+    });
 
     return () => { io.disconnect(); window.removeEventListener('resize', upd); };
   }, [id]);
@@ -124,12 +130,24 @@ export default function ProductPage() {
   const selectedStockQty = getStock(selectedColor, selectedSize);
   const isSelectedOOS = dbProduct?.stock !== undefined && dbProduct?.stock !== null && selectedStockQty === 0;
 
-  // "اطلبي الآن" → مباشرة لفورم الطلب
+  // ── Unified display product: Supabase first, FEATURED_PRODUCTS fallback ──
+  const dp = {
+    id:            dbProduct?.id            ?? product.id,
+    nameAr:        dbProduct?.name_ar       ?? product.nameAr,
+    nameFr:        dbProduct?.name_fr       ?? product.nameFr,
+    emoji:         dbProduct?.emoji         ?? (product as Record<string, unknown>).emoji as string ?? '🛍️',
+    colors:        (dbProduct?.colors?.length ?? 0) > 0 ? dbProduct!.colors : product.colors,
+    price:         dbProduct?.price         ?? product.price,
+    originalPrice: dbProduct?.original_price ?? null,
+    badge:         dbProduct?.badge         ?? product.badge ?? null,
+    category:      dbProduct?.category      ?? product.category,
+    in_stock:      dbProduct?.in_stock      ?? true,
+  };
+
   const handleOrder = () => {
     router.push(`/order?product=${dp.id}&color=${selectedColor}&size=${selectedSize}&qty=${qty}`);
   };
 
-  // "أضيفي للسلة" → تضاف للسلة وتفتح الـ drawer
   const handleAddToCart = () => {
     const thumbnail = dbProduct?.images?.[dbProduct.thumbnail_index ?? 0] ?? undefined;
     addItem({
@@ -153,31 +171,15 @@ export default function ProductPage() {
   const isDark = theme === 'dark';
   const isAr = lang === 'ar';
 
-  // ── Unified display product: Supabase first, FEATURED_PRODUCTS fallback ──
-  const dp = {
-    id:            dbProduct?.id            ?? product.id,
-    nameAr:        dbProduct?.name_ar       ?? product.nameAr,
-    nameFr:        dbProduct?.name_fr       ?? product.nameFr,
-    emoji:         dbProduct?.emoji         ?? (product as Record<string, unknown>).emoji as string ?? '🛍️',
-    colors:        (dbProduct?.colors?.length ?? 0) > 0 ? dbProduct!.colors : product.colors,
-    price:         dbProduct?.price         ?? product.price,
-    originalPrice: dbProduct?.original_price ?? null,
-    badge:         dbProduct?.badge         ?? product.badge ?? null,
-    category:      dbProduct?.category      ?? product.category,
-    in_stock:      dbProduct?.in_stock      ?? true,
-  };
-
   const name = isAr ? dp.nameAr : dp.nameFr;
   const category = isAr
     ? CATEGORIES.find(c => c.ar === dp.category)?.ar ?? dp.category
     : CATEGORIES.find(c => c.ar === dp.category)?.fr ?? dp.category;
 
-  // Discount %
   const discountPct = dp.originalPrice && dp.originalPrice > dp.price
     ? Math.round((1 - dp.price / dp.originalPrice) * 100)
     : null;
 
-  // Use real images from Supabase, fall back to fake gradient thumbnails
   const thumbColors = [dp.colors[0] ?? '#244D3B', '#F5F0E8', '#1a1a2e', '#AF8E4A'];
 
   const bg = isDark ? '#111111' : '#FAFAF8';
@@ -189,7 +191,6 @@ export default function ProductPage() {
   const isMobile = windowWidth < 640;
   const font  = isAr ? 'Cairo, sans-serif' : 'Inter, sans-serif';
 
-  // ── Size chart data (common for all clothing) ──────────────────────────
   const SIZE_CHART = {
     headers: { ar: ['المقاس','الصدر (سم)','الخصر (سم)','الأرداف (سم)','الطول التقريبي'], fr: ['Taille','Poitrine (cm)','Taille (cm)','Hanches (cm)','Longueur approx.'] },
     rows: [
@@ -215,10 +216,7 @@ export default function ProductPage() {
     };
     return (
       <>
-        {/* Backdrop */}
         <div onClick={() => setSizeChartOpen(false)} style={{ position:'fixed', inset:0, background:'rgba(0,0,0,.55)', zIndex:500, backdropFilter:'blur(4px)' }} />
-
-        {/* Modal */}
         <div style={{
           position:'fixed', zIndex:600,
           bottom: isMobile ? 0 : '50%',
@@ -233,14 +231,11 @@ export default function ProductPage() {
           boxShadow: '0 24px 80px rgba(0,0,0,.35)',
           padding: isMobile ? '0 0 32px' : '0 0 28px',
         }}>
-          {/* Handle (mobile) */}
           {isMobile && (
             <div style={{ display:'flex', justifyContent:'center', padding:'12px 0 4px' }}>
               <div style={{ width:40, height:4, borderRadius:2, background:C2.border }} />
             </div>
           )}
-
-          {/* Header */}
           <div style={{ display:'flex', justifyContent:'space-between', alignItems:'center', padding: isMobile?'14px 20px 10px':'20px 24px 14px', borderBottom:`1px solid ${C2.border}` }}>
             <div>
               <div style={{ fontSize: isMobile?15:17, fontWeight:800, color:C2.text, fontFamily:'Cairo, sans-serif', display:'flex', alignItems:'center', gap:8 }}>
@@ -253,8 +248,6 @@ export default function ProductPage() {
             </div>
             <button onClick={() => setSizeChartOpen(false)} style={{ width:32, height:32, borderRadius:'50%', background:C2.border, border:'none', cursor:'pointer', fontSize:18, color:C2.text, display:'flex', alignItems:'center', justifyContent:'center', flexShrink:0 }}>×</button>
           </div>
-
-          {/* How to measure tip */}
           <div style={{ margin:'14px 20px', background: isDark2?'#1D4939':'#FFF8EC', border:`1px solid ${isDark2?'#AF8E4A40':'#AF8E4A30'}`, borderRadius:12, padding:'10px 14px', display:'flex', gap:10, alignItems:'flex-start' }}>
             <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#AF8E4A" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" style={{ flexShrink:0 }}><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>
             <div style={{ fontSize:12, color: isDark2?'#DAC08B':'#7A5A20', fontFamily:font, lineHeight:1.6 }}>
@@ -263,8 +256,6 @@ export default function ProductPage() {
                 : 'Mesurez la poitrine sous les aisselles, la taille au point le plus étroit, les hanches au point le plus large.'}
             </div>
           </div>
-
-          {/* Table */}
           <div style={{ overflowX:'auto', padding:'0 20px' }}>
             <table style={{ width:'100%', borderCollapse:'collapse', fontSize: isMobile?12:13, fontFamily:font }}>
               <thead>
@@ -304,8 +295,6 @@ export default function ProductPage() {
               </tbody>
             </table>
           </div>
-
-          {/* Footer note */}
           <div style={{ padding:'14px 20px 0', fontSize:11, color:C2.muted, fontFamily:font, textAlign:'center' }}>
             {isAr
               ? 'اضغطي على مقاس لتحديده مباشرة · المقاسات تقريبية وقد تختلف حسب القطعة'
@@ -319,7 +308,6 @@ export default function ProductPage() {
   return (
     <>
       <SizeChartModal />
-      {/* ── NAVBAR ─────────────────────────────────────────── */}
       <nav style={{
         position: 'fixed', top: '10px', left: '50%', transform: 'translateX(-50%)',
         width: 'calc(100% - 32px)', maxWidth: '1380px', height: '68px',
@@ -367,7 +355,6 @@ export default function ProductPage() {
 
       <main style={{ background: bg, minHeight: '100vh', color: text, paddingTop: isMobile ? '88px' : '100px', transition: 'background 0.4s, color 0.4s', overflowX: 'hidden' }}>
 
-        {/* ── BREADCRUMB ──────────────────────────────────── */}
         <div style={{ maxWidth: '1240px', margin: '0 auto', padding: isMobile ? '0 12px 16px' : '0 20px 24px', display: 'flex', alignItems: 'center', gap: '6px', fontSize: isMobile ? '11px' : '13px', color: sub, flexWrap: 'wrap' }}>
           <a href="/" style={{ color: '#AF8E4A', textDecoration: 'none', fontWeight: 600 }}>
             {isAr ? 'الرئيسية' : 'Accueil'}
@@ -378,10 +365,8 @@ export default function ProductPage() {
           <span style={{ color: text, fontWeight: 600 }}>{name}</span>
         </div>
 
-        {/* ── PRODUCT MAIN ─────────────────────────────────── */}
         <div style={{ maxWidth: '1240px', margin: '0 auto', padding: isMobile ? '0 12px' : '0 20px', display: 'grid', gridTemplateColumns: isMobile ? '1fr' : '1fr 1fr', gap: isMobile ? '24px' : '64px', alignItems: 'start' }}>
 
-          {/* LEFT: Images */}
           <div className="reveal" style={{ display: 'flex', flexDirection: isAr ? 'row-reverse' : 'row', gap: '12px' }}>
             <style>{`
               @keyframes ihsen-shimmer{from{background-position:200% 0}to{background-position:-200% 0}}
@@ -390,7 +375,6 @@ export default function ProductPage() {
               .ihsen-img-enter{animation:ihsen-img-fade .45s cubic-bezier(0.22,1,0.36,1) forwards;}
             `}</style>
 
-            {/* Thumbnails — hidden on mobile */}
             <div style={{ display: isMobile ? 'none' : 'flex', flexDirection: 'column', gap: '10px' }}>
               {productLoading
                 ? Array.from({length:3}).map((_,i) => (
@@ -400,7 +384,6 @@ export default function ProductPage() {
                   ? productImages.map((url, i) => (
                       <button key={i} onClick={() => {
                         setActiveImg(i);
-                        // Reset auto-rotate timer on manual click
                         if (autoRotateRef.current) clearInterval(autoRotateRef.current);
                         if (productImages.length > 1) {
                           autoRotateRef.current = setInterval(() => {
@@ -414,7 +397,6 @@ export default function ProductPage() {
                         boxShadow: activeImg === i ? '0 4px 16px rgba(175,142,74,0.3)' : 'none',
                         transition: 'border .2s, box-shadow .2s',
                       }}>
-                        {/* eslint-disable-next-line @next/next/no-img-element */}
                         <img src={url} alt="" style={{ width:'100%', height:'100%', objectFit:'cover', display:'block' }} />
                       </button>
                     ))
@@ -430,7 +412,6 @@ export default function ProductPage() {
               }
             </div>
 
-            {/* Main image */}
             <div style={{
               flex: 1, borderRadius: '24px', overflow: 'hidden', aspectRatio: '4/5',
               background: productImages.length > 0
@@ -444,7 +425,6 @@ export default function ProductPage() {
                 <div className="ihsen-img-skel" style={{ position:'absolute', inset:0, borderRadius:24 }} />
               ) : productImages.length > 0 ? (
                 <>
-                  {/* eslint-disable-next-line @next/next/no-img-element */}
                   <img
                     key={activeImg}
                     src={productImages[activeImg]}
@@ -454,7 +434,6 @@ export default function ProductPage() {
                     style={{ width:'100%', height:'100%', objectFit:'cover', display:'block' }}
                   />
                   {imgLoading && <div className="ihsen-img-skel" style={{ position:'absolute', inset:0 }} />}
-                  {/* Auto-rotate dots */}
                   {productImages.length > 1 && (
                     <div style={{ position:'absolute', bottom:14, left:'50%', transform:'translateX(-50%)', display:'flex', gap:6 }}>
                       {productImages.map((_,i) => (
@@ -488,7 +467,6 @@ export default function ProductPage() {
             </div>
           </div>
 
-          {/* RIGHT: Info */}
           <div className="reveal" style={{ display: 'flex', flexDirection: 'column', gap: '24px' }}>
 
             <style>{`
@@ -502,54 +480,44 @@ export default function ProductPage() {
             `}</style>
 
             {productLoading ? (
-              /* ── Skeleton right panel ───────────────── */
               <div style={{ display:'flex', flexDirection:'column', gap:28 }}>
-                {/* Category badge + title */}
                 <div style={{ display:'flex', flexDirection:'column', gap:12 }}>
                   <div className="ihsen-rskel" style={{ height:12, width:'30%' }} />
                   <div className="ihsen-rskel" style={{ height:30, width:'85%' }} />
                   <div className="ihsen-rskel" style={{ height:22, width:'60%' }} />
                 </div>
-                {/* Price */}
                 <div style={{ display:'flex', gap:12, alignItems:'center' }}>
                   <div className="ihsen-rskel" style={{ height:40, width:'42%' }} />
                   <div className="ihsen-rskel" style={{ height:22, width:'22%', opacity:.6 }} />
                   <div className="ihsen-rskel" style={{ height:22, width:'14%', opacity:.5 }} />
                 </div>
-                {/* Divider */}
                 <div className="ihsen-rskel" style={{ height:1, width:'100%', opacity:.4 }} />
-                {/* Colors label + circles */}
                 <div style={{ display:'flex', flexDirection:'column', gap:12 }}>
                   <div className="ihsen-rskel" style={{ height:12, width:'28%' }} />
                   <div style={{ display:'flex', gap:10 }}>
                     {[1,2,3,4].map(i => <div key={i} className="ihsen-rskel" style={{ width:38, height:38, borderRadius:'50%' }} />)}
                   </div>
                 </div>
-                {/* Sizes */}
                 <div style={{ display:'flex', flexDirection:'column', gap:12 }}>
                   <div className="ihsen-rskel" style={{ height:12, width:'22%' }} />
                   <div style={{ display:'flex', gap:8 }}>
                     {['XS','S','M','L','XL','XXL'].map(s => <div key={s} className="ihsen-rskel" style={{ height:36, width:52, borderRadius:10 }} />)}
                   </div>
                 </div>
-                {/* Qty row */}
                 <div style={{ display:'flex', gap:16, alignItems:'center' }}>
                   <div className="ihsen-rskel" style={{ height:12, width:'16%' }} />
                   <div className="ihsen-rskel" style={{ height:44, width:128, borderRadius:12 }} />
                 </div>
-                {/* CTA buttons */}
                 <div style={{ display:'flex', flexDirection:'column', gap:12 }}>
                   <div className="ihsen-rskel" style={{ height:56, width:'100%', borderRadius:14 }} />
                   <div className="ihsen-rskel" style={{ height:50, width:'100%', borderRadius:14, opacity:.6 }} />
                 </div>
-                {/* Trust badges */}
                 <div style={{ display:'grid', gridTemplateColumns:'1fr 1fr', gap:10 }}>
                   {[1,2,3,4].map(i => <div key={i} className="ihsen-rskel" style={{ height:46, borderRadius:10 }} />)}
                 </div>
               </div>
             ) : (
               <>
-            {/* Category + name */}
             <div>
               <span style={{ fontSize: '12px', fontWeight: 700, color: '#AF8E4A', letterSpacing: '2px', textTransform: 'uppercase', fontFamily: 'Inter, sans-serif' }}>
                 {category}
@@ -559,7 +527,6 @@ export default function ProductPage() {
               </h1>
             </div>
 
-            {/* Price */}
             <div style={{ display: 'flex', alignItems: 'baseline', gap: '12px' }}>
               <span style={{ fontSize: isMobile ? '28px' : '36px', fontWeight: 900, color: '#244D3B', fontFamily: 'Inter, sans-serif' }}>
                 {dp.price.toLocaleString('ar-DZ')} <span style={{ fontSize: isMobile ? '14px' : '18px', fontWeight: 600 }}>دج</span>
@@ -578,17 +545,14 @@ export default function ProductPage() {
               )}
             </div>
 
-            {/* Divider */}
             <div style={{ height: '1px', background: border }} />
 
-            {/* Description */}
             {(isAr ? dbProduct?.desc_ar : dbProduct?.desc_fr) && (
               <div style={{ fontSize:'14px', color:sub, lineHeight:1.75, fontFamily:font }}>
                 {isAr ? dbProduct!.desc_ar : dbProduct!.desc_fr}
               </div>
             )}
 
-            {/* Colors */}
             <div>
               <p style={{ fontSize: '13px', fontWeight: 700, color: sub, marginBottom: '12px' }}>
                 {isAr ? `اللون: ${dp.colors[selectedColor] ?? '—'}` : `Couleur: ${dp.colors[selectedColor] ?? '—'}`}
@@ -617,7 +581,6 @@ export default function ProductPage() {
               </div>
             </div>
 
-            {/* Sizes */}
             <div>
               <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '12px' }}>
                 <p style={{ fontSize: '13px', fontWeight: 700, color: sub }}>
@@ -662,7 +625,6 @@ export default function ProductPage() {
                 })}
               </div>
 
-              {/* Stock status banner */}
               {dbProduct?.stock !== undefined && dbProduct?.stock !== null && (() => {
                 if (selectedStockQty === 0) return (
                   <div style={{ marginTop:10, display:'flex', alignItems:'center', gap:8, padding:'10px 14px', borderRadius:10, background:'#FEF2F2', border:'1px solid #FECACA', color:'#DC2626', fontSize:13, fontWeight:700, fontFamily:isAr?'Cairo, sans-serif':'Inter, sans-serif' }}>
@@ -680,7 +642,6 @@ export default function ProductPage() {
               })()}
             </div>
 
-            {/* Quantity */}
             <div style={{ display: 'flex', alignItems: 'center', gap: '16px' }}>
               <p style={{ fontSize: '13px', fontWeight: 700, color: sub }}>{isAr ? 'الكمية' : 'Quantité'}</p>
               <div style={{ display: 'flex', alignItems: 'center', gap: '0', border: `2px solid ${border}`, borderRadius: '12px', overflow: 'hidden' }}>
@@ -690,7 +651,6 @@ export default function ProductPage() {
               </div>
             </div>
 
-            {/* CTA buttons */}
             <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
               <button onClick={handleOrder} disabled={isSelectedOOS} style={{
                 width: '100%', height: '56px', borderRadius: '14px',
@@ -737,7 +697,6 @@ export default function ProductPage() {
               </button>
             </div>
 
-            {/* Trust badges */}
             <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '10px' }}>
               {[
                 { d:'M13 16V6a1 1 0 00-1-1H4a1 1 0 00-1 1v10a1 1 0 001 1h1m8-1a1 1 0 01-1 1H9m4-1V8a1 1 0 011-1h2.586a1 1 0 01.707.293l3.414 3.414a1 1 0 01.293.707V16a1 1 0 01-1 1h-1m-6-1a1 1 0 001 1h1M5 17a2 2 0 104 0m-4 0a2 2 0 114 0m6 0a2 2 0 104 0m-4 0a2 2 0 114 0', ar: 'توصيل لـ 69 ولاية', fr: 'Livraison 69 wilayas' },
@@ -754,14 +713,12 @@ export default function ProductPage() {
               ))}
             </div>
             </>
-            )} {/* end productLoading conditional */}
+            )}
           </div>
         </div>
 
-        {/* ── DESCRIPTION ──────────────────────────────────────── */}
         <div style={{ maxWidth: '1240px', margin: isMobile ? '40px auto 0' : '80px auto 0', padding: isMobile ? '0 12px' : '0 20px' }}>
           <div style={{ display: 'grid', gridTemplateColumns: isMobile ? '1fr' : '1fr 1fr', gap: isMobile ? '24px' : '48px' }}>
-
             <div className="reveal">
               <h2 style={{ fontSize: '22px', fontWeight: 800, color: text, marginBottom: '16px' }}>
                 {isAr ? 'وصف المنتج' : 'Description du produit'}
@@ -818,7 +775,6 @@ export default function ProductPage() {
           </div>
         </div>
 
-        {/* ── RELATED PRODUCTS ─────────────────────────────────── */}
         <div style={{ maxWidth: '1240px', margin: isMobile ? '40px auto 0' : '80px auto 0', padding: isMobile ? '0 12px 48px' : '0 20px 80px' }}>
           <h2 className="reveal" style={{ fontSize: isMobile ? '20px' : '26px', fontWeight: 900, color: text, marginBottom: isMobile ? '20px' : '32px' }}>
             {isAr ? 'منتجات مشابهة' : 'Produits similaires'}

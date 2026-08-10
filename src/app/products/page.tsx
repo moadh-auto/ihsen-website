@@ -59,6 +59,7 @@ function ProductsContent() {
   // Real products from Supabase
   const [dbProducts, setDbProducts] = useState<DbProduct[]>([]);
   const [loading,    setLoading]    = useState(true);
+  const [social, setSocial] = useState({ instagram:'', facebook:'', tiktok:'', whatsapp:'' });
 
   // Page loader state machine: 'in' = visible, 'out' = fading, 'gone' = removed
   const [loaderPhase, setLoaderPhase] = useState<'in'|'out'|'gone'>('in');
@@ -76,13 +77,15 @@ function ProductsContent() {
 
     // Fetch from Supabase with minimum 700ms loader display
     const minDelay = new Promise<void>(r => setTimeout(r, 700));
-    const fetchData = supabase.from('products').select('*')
-      .eq('active', true).order('sort_order', { ascending: true })
-      .then(({ data }) => {
-        if (data && data.length > 0) setDbProducts(data as DbProduct[]);
-        setLoading(false);
-      });
-    Promise.all([minDelay, fetchData]).then(() => {
+    const fetchProd = supabase.from('products').select('*').eq('active', true).order('sort_order', { ascending: true });
+    const fetchSoc = supabase.from('site_settings').select('value').eq('key', 'social_links').maybeSingle();
+
+    Promise.all([minDelay, fetchProd, fetchSoc]).then(([, { data: pData }, { data: sData }]) => {
+      if (pData) setDbProducts(pData as DbProduct[]);
+      if (sData?.value) {
+        try { setSocial({ ...social, ...JSON.parse(sData.value) }); } catch {}
+      }
+      setLoading(false);
       setLoaderPhase('out');
       setTimeout(() => setLoaderPhase('gone'), 600);
     });
@@ -226,7 +229,7 @@ function ProductsContent() {
               <button key={r.id} onClick={() => setPriceRange(r.id)} style={{
                 display: 'flex', alignItems: 'center', gap: 8,
                 background: active ? `${C.gold}18` : 'transparent',
-                border: `1px solid ${active ? C.gold : 'transparent'}`,
+                border: `1px solid ${C.gold} : 'transparent'}`,
                 borderRadius: 8, padding: '7px 10px', cursor: 'pointer',
                 color: active ? C.gold : C.text, fontSize: 13, fontWeight: active ? 700 : 400,
                 fontFamily: font, textAlign: isAr ? 'right' : 'left', width: '100%',
@@ -313,19 +316,15 @@ function ProductsContent() {
         @keyframes ihsen-ldr-bar  { from{width:0%} to{width:100%} }
         @keyframes ihsen-ldr-dot  { 0%,80%,100%{opacity:.25;transform:scale(.8)} 40%{opacity:1;transform:scale(1.15)} }
       `}</style>
-      {/* Logo */}
       <div style={{ animation: 'ihsen-ldr-glow 2s ease-in-out infinite' }}>
         <Image src="/logos/full-vertical-gold.svg" alt="إحسان" width={80} height={80} priority />
       </div>
-      {/* Tagline */}
       <div style={{ color: '#AF8E4A', fontSize: 12, letterSpacing: 4, textTransform: 'uppercase', fontFamily: 'Inter, sans-serif', opacity: .75 }}>
         {isAr ? 'جاري التحميل...' : 'Chargement...'}
       </div>
-      {/* Gold progress bar */}
       <div style={{ width: 180, height: 2, background: 'rgba(175,142,74,.15)', borderRadius: 2, overflow: 'hidden' }}>
         <div style={{ height: '100%', background: 'linear-gradient(90deg, #AF8E4A, #DAC08B, #AF8E4A)', backgroundSize: '200% 100%', borderRadius: 2, animation: 'ihsen-ldr-bar 0.65s cubic-bezier(0.25,1,0.5,1) 0.1s forwards', width: '0%' }} />
       </div>
-      {/* 3 dots */}
       <div style={{ display: 'flex', gap: 6, marginTop: 4 }}>
         {[0,1,2].map(i => (
           <div key={i} style={{ width: 6, height: 6, borderRadius: '50%', background: '#AF8E4A', animation: `ihsen-ldr-dot 1.1s ease-in-out ${i * 0.2}s infinite` }} />
@@ -337,10 +336,8 @@ function ProductsContent() {
   return (
     <div style={{ minHeight: '100vh', background: C.bg, fontFamily: font, direction: isAr ? 'rtl' : 'ltr' }}>
 
-      {/* Page Loader */}
       {loaderPhase !== 'gone' && <PageLoader />}
 
-      {/* ── NAV ──────────────────────────────────────────────────────────── */}
       <nav style={{
         position: 'fixed', top: 0, left: 0, right: 0, zIndex: 200,
         padding: isMobile ? '12px 16px' : '14px 32px',
@@ -383,7 +380,6 @@ function ProductsContent() {
           <button onClick={toggleLang} style={{ background: 'none', border: `1px solid ${C.border}`, borderRadius: 8, padding: '5px 10px', cursor: 'pointer', color: C.gold, fontWeight: 700, fontSize: 11, fontFamily: font }}>
             {isAr ? 'FR' : 'AR'}
           </button>
-          {/* Cart button */}
           <button onClick={openCart} style={{
             position: 'relative', background: 'none', border: `1px solid ${C.border}`,
             borderRadius: 8, padding: '5px 9px', cursor: 'pointer', fontSize: 16,
@@ -407,7 +403,6 @@ function ProductsContent() {
         </div>
       </nav>
 
-      {/* ── HEADER ───────────────────────────────────────────────────────── */}
       <div style={{
         background: 'linear-gradient(145deg, #060e08, #0F2419, #1a3a28)',
         paddingTop: isMobile ? 90 : 100, paddingBottom: isMobile ? 32 : 44,
@@ -417,7 +412,6 @@ function ProductsContent() {
         <div style={{ position: 'absolute', top: '50%', left: '50%', transform: 'translate(-50%,-50%)', width: 500, height: 500, borderRadius: '50%', background: 'radial-gradient(circle, rgba(36,77,59,.4) 0%, transparent 70%)', pointerEvents: 'none' }} />
         <div style={{ maxWidth: 1200, margin: '0 auto', position: 'relative', zIndex: 1 }}>
           <div style={{ display: 'flex', flexDirection: isMobile ? 'column' : 'row', gap: isMobile ? 14 : 20, alignItems: isMobile ? 'stretch' : 'center' }}>
-            {/* Title */}
             <div style={{ flex: 1 }}>
               <div style={{ fontSize: 11, fontWeight: 700, color: '#DAC08B', textTransform: 'uppercase', letterSpacing: 3, marginBottom: 6, fontFamily: font }}>
                 {isAr ? 'مجموعة إحسان' : 'COLLECTION IHSEN'}
@@ -426,7 +420,6 @@ function ProductsContent() {
                 {isAr ? 'جميع المنتجات' : 'Tous les produits'}
               </h1>
             </div>
-            {/* Search */}
             <div style={{ position: 'relative', width: isMobile ? '100%' : 300 }}>
               <input
                 type="text" value={search} onChange={e => setSearch(e.target.value)}
@@ -450,10 +443,7 @@ function ProductsContent() {
         </div>
       </div>
 
-      {/* ── BODY: sidebar + grid ─────────────────────────────────────────── */}
       <div style={{ maxWidth: 1200, margin: '0 auto', padding: isMobile ? '20px 16px 60px' : '28px 32px 80px', display: 'flex', gap: 28, alignItems: 'flex-start' }}>
-
-        {/* ── SIDEBAR (desktop only) ─────────────────────────────────────── */}
         {isDesktop && (
           <aside data-reveal data-reveal-dir="right" style={{
             width: 230, flexShrink: 0, position: 'sticky', top: 80,
@@ -461,7 +451,6 @@ function ProductsContent() {
             borderRadius: 18, padding: 22,
             boxShadow: isDark ? 'none' : '0 2px 16px rgba(0,0,0,.06)',
           }}>
-            {/* Header */}
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 20 }}>
               <span style={{ fontSize: 14, fontWeight: 800, color: C.text, fontFamily: font }}>
                 {isAr ? '🎛 الفلاتر' : '🎛 Filtres'}
@@ -476,10 +465,7 @@ function ProductsContent() {
           </aside>
         )}
 
-        {/* ── MAIN ───────────────────────────────────────────────────────── */}
         <div style={{ flex: 1, minWidth: 0 }}>
-
-          {/* Category tabs + mobile filter button */}
           <div data-reveal style={{ display: 'flex', gap: 8, flexWrap: 'wrap', marginBottom: 16, alignItems: 'center' }}>
             {[{ id: 'all', ar: 'الكل', fr: 'Tous' }, ...CATEGORIES].map(cat => {
               const active = activeCat === cat.id;
@@ -500,7 +486,6 @@ function ProductsContent() {
               );
             })}
 
-            {/* Mobile filter button */}
             {!isDesktop && (
               <button onClick={() => setDrawerOpen(true)} style={{
                 marginInlineStart: 'auto',
@@ -524,7 +509,6 @@ function ProductsContent() {
             )}
           </div>
 
-          {/* Active filter chips */}
           {(activeFilterCount > 0 || search) && (
             <div style={{ display: 'flex', flexWrap: 'wrap', gap: 6, marginBottom: 16 }}>
               {priceRange !== 'all' && (
@@ -548,14 +532,12 @@ function ProductsContent() {
             </div>
           )}
 
-          {/* Result info */}
           <div style={{ fontSize: 12, color: C.muted, marginBottom: 18, fontFamily: font }}>
             {filtered.length === 0
               ? (isAr ? 'لا توجد نتائج' : 'Aucun résultat')
               : `${filtered.length} ${isAr ? 'منتج' : 'produit(s)'}`}
           </div>
 
-          {/* Skeleton CSS */}
           <style>{`
             @keyframes ihsen-prod-shimmer {
               from { background-position: 200% 0; }
@@ -569,7 +551,6 @@ function ProductsContent() {
             }
           `}</style>
 
-          {/* Grid */}
           {loading ? (
             <div style={{ display: 'grid', gridTemplateColumns: `repeat(${cols}, 1fr)`, gap: isMobile ? 12 : 18 }}>
               {Array.from({ length: cols * 2 }).map((_, i) => (

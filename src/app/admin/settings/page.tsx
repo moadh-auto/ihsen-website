@@ -28,7 +28,7 @@ const DEFAULT_ACCESSORY_CATS: BiCat[] = [
   {ar:'مجوهرات',     fr:'Bijoux'},
   {ar:'حزام',        fr:'Ceinture'},
 ];
-const DEFAULT_SOCIAL = { instagram:'', facebook:'', tiktok:'', whatsapp:'', youtube:'' };
+const DEFAULT_SOCIAL = { instagram:'', facebook:'', tiktok:'', whatsapp:'' };
 const DEFAULT_CONTACT = { phone:'', whatsapp:'', email:'', address:'', hours_ar:'', hours_fr:'' };
 const DEFAULT_NOTIF   = { notification_email: '' };
 
