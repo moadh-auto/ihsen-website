@@ -34,7 +34,7 @@ export default function AdminLogin() {
       sessionStorage.setItem('ihsen_admin', '1');
       router.push('/admin/dashboard');
     } else {
-      setError('كلمة المرور غير صحيحة أو الحساب غير موجود');
+      setError(`خطأ: ${authError.message}`);
       setLoading(false);
     }
   };
