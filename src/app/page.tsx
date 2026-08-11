@@ -58,7 +58,7 @@ export default function LandingPage() {
     window.addEventListener('scroll', onScroll);
 
     // Fetch real products from Supabase
-    const minDelay = new Promise(r => setTimeout(r, 700)); // minimum loader time
+    const minDelay = new Promise(r => setTimeout(r, 50)); // minimized for better LCP
     const fetchProd = supabase.from('products').select('*')
       .eq('active', true).order('sort_order', { ascending: true });
     
@@ -71,12 +71,12 @@ export default function LandingPage() {
       }
       setProdLoad(false);
       setLoader('out');
-      loaderTimer.current = setTimeout(() => setLoader('gone'), 600);
+      loaderTimer.current = setTimeout(() => setLoader('gone'), 350);
     }).catch(() => {
       // Even on error — dismiss the loader so user isn't stuck
       setProdLoad(false);
       setLoader('out');
-      loaderTimer.current = setTimeout(() => setLoader('gone'), 600);
+      loaderTimer.current = setTimeout(() => setLoader('gone'), 350);
     });
 
     // Fetch contact info, social links, featured product IDs
@@ -305,7 +305,7 @@ export default function LandingPage() {
       display:'flex', flexDirection:'column', alignItems:'center', justifyContent:'center', gap:0,
       opacity: loaderPhase === 'out' ? 0 : 1,
       transform: loaderPhase === 'out' ? 'scale(1.04)' : 'scale(1)',
-      transition:'opacity 0.55s cubic-bezier(0.76,0,0.24,1), transform 0.55s cubic-bezier(0.76,0,0.24,1)',
+      transition:'opacity 0.3s cubic-bezier(0.76,0,0.24,1), transform 0.3s cubic-bezier(0.76,0,0.24,1)',
       pointerEvents: loaderPhase === 'out' ? 'none' : 'all',
     }}>
       <style>{`
@@ -526,9 +526,8 @@ export default function LandingPage() {
                       onMouseEnter={e => (e.currentTarget.style.transform = 'rotate(0deg) scale(1.06)')}
                       onMouseLeave={e => (e.currentTarget.style.transform = `${rotations[i]} scale(${scales[i]})`)}
                     >
-                      {/* Product image */}
                       {hasImg
-                        ? <img src={thumb!} alt={p.name_ar} style={{ position:'absolute', inset:0, width:'100%', height:'100%', objectFit:'cover', display:'block' }} />
+                        ? <img src={thumb!} alt={p.name_ar} loading="eager" fetchPriority="high" style={{ position:'absolute', inset:0, width:'100%', height:'100%', objectFit:'cover', display:'block' }} />
                         : null
                       }
 
