@@ -329,7 +329,7 @@ export default function ProductPage() {
         {!isMobile && (
           <div style={{ display: 'flex', alignItems: 'center', gap: '2px', flex: 1, justifyContent: 'center' }}>
             {CATEGORIES.map(cat => (
-              <a key={cat.id} href={`/#${cat.id}`} style={{ display: 'flex', alignItems: 'center', gap: '5px', padding: '7px 13px', borderRadius: '10px', textDecoration: 'none', fontSize: '14px', fontWeight: 700, color: sub, transition: 'all 0.18s' }}>
+              <a key={cat.id} href={`/products?cat=${cat.id}`} style={{ display: 'flex', alignItems: 'center', gap: '5px', padding: '7px 13px', borderRadius: '10px', textDecoration: 'none', fontSize: '14px', fontWeight: 700, color: sub, transition: 'all 0.18s' }}>
                 {(cat as Record<string, unknown>).emoji as string ?? ''} {isAr ? cat.ar : cat.fr}
               </a>
             ))}
@@ -823,7 +823,7 @@ export default function ProductPage() {
             <span style={{ fontSize: '20px', fontWeight: 900, color: isDark ? '#AF8E4A' : '#244D3B' }}>إحسان</span>
           </div>
           <p style={{ fontSize: '13px', color: sub, marginBottom: '20px' }}>
-            {isAr ? '© 2024 إحسان — أزياء نسائية محتشمة راقية' : '© 2024 Ihsen — Mode féminine modeste et élégante'}
+            {isAr ? `© ${new Date().getFullYear()} إحسان — أزياء نسائية محتشمة راقية` : `© ${new Date().getFullYear()} Ihsen — Mode féminine modeste et élégante`}
           </p>
           <div style={{ display: 'flex', gap: 16, alignItems: 'center', justifyContent: 'center' }}>
             {social.instagram && (
