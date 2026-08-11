@@ -28,7 +28,7 @@ const DEFAULT_ACCESSORY_CATS: BiCat[] = [
   {ar:'مجوهرات',     fr:'Bijoux'},
   {ar:'حزام',        fr:'Ceinture'},
 ];
-const DEFAULT_SOCIAL = { instagram:'', facebook:'', tiktok:'', whatsapp:'' };
+const DEFAULT_SOCIAL = { instagram:'', facebook:'', tiktok:'', whatsapp:'', telegram:'' };
 const DEFAULT_CONTACT = { phone:'', whatsapp:'', email:'', address:'', hours_ar:'', hours_fr:'' };
 const DEFAULT_NOTIF   = { notification_email: '' };
 
@@ -518,7 +518,7 @@ export default function SettingsPage() {
                     { key:'facebook',  label:'Facebook',  placeholder:'https://facebook.com/ihsen...' },
                     { key:'tiktok',    label:'TikTok',    placeholder:'https://tiktok.com/@ihsen...' },
                     { key:'whatsapp',  label:'WhatsApp',  placeholder:'https://wa.me/213...' },
-                    { key:'youtube',   label:'YouTube',   placeholder:'https://youtube.com/@ihsen...' },
+                    { key:'telegram',  label:'Telegram',  placeholder:'https://t.me/ihsen...' },
                   ] as const).map(f => (
                     <div key={f.key}>
                       <label style={{ fontSize:11, color:C.muted, display:'block', marginBottom:5, fontFamily:'Inter, sans-serif', fontWeight:600 }}>{f.label}</label>

@@ -31,7 +31,7 @@ export default function LandingPage() {
 
   // Contact info from Supabase
   const [contactInfo,  setContactInfo]  = useState({ phone:'', whatsapp:'', email:'', address:'', hours_ar:'', hours_fr:'' });
-  const [socialLinks,  setSocialLinks]  = useState({ instagram:'', facebook:'', tiktok:'', whatsapp:'', youtube:'' });
+  const [socialLinks,  setSocialLinks]  = useState({ instagram:'', facebook:'', tiktok:'', whatsapp:'', telegram:'' });
 
   // Contact form states
   const [cName,     setCName]     = useState('');
@@ -846,25 +846,37 @@ export default function LandingPage() {
               </div>
 
               {/* Social links */}
-              {(socialLinks.instagram||socialLinks.facebook||socialLinks.tiktok||socialLinks.whatsapp||socialLinks.youtube) && (
+              {(socialLinks.instagram||socialLinks.facebook||socialLinks.tiktok||socialLinks.whatsapp||socialLinks.telegram) && (
                 <div>
                   <div style={{ fontSize:9, fontWeight:700, color:'rgba(175,142,74,.7)', textTransform:'uppercase' as const, letterSpacing:1.5, fontFamily:'Inter', marginBottom:12 }}>
                     {isAr ? 'تابعينا' : 'Suivez-nous'}
                   </div>
                   <div style={{ display:'flex', gap:8, flexWrap:'wrap' }}>
-                    {([
-                      socialLinks.instagram && { href:socialLinks.instagram, d:'M16 8a6 6 0 016 6v7h-4v-7a2 2 0 00-2-2 2 2 0 00-2 2v7h-4v-7a6 6 0 016-6zM2 9h4v12H2z M4 6a2 2 0 100-4 2 2 0 000 4z' },
-                      socialLinks.facebook  && { href:socialLinks.facebook,  d:'M18 2h-3a5 5 0 00-5 5v3H7v4h3v8h4v-8h3l1-4h-4V7a1 1 0 011-1h3z' },
-                      socialLinks.tiktok    && { href:socialLinks.tiktok,    d:'M9 12a4 4 0 104 4V4a5 5 0 005 5' },
-                      socialLinks.youtube   && { href:socialLinks.youtube,   d:'M22.54 6.42a2.78 2.78 0 00-1.95-1.96C18.88 4 12 4 12 4s-6.88 0-8.59.46a2.78 2.78 0 00-1.95 1.96A29 29 0 001 12a29 29 0 00.46 5.58A2.78 2.78 0 003.41 19.6C5.12 20 12 20 12 20s6.88 0 8.59-.46a2.78 2.78 0 001.95-1.95A29 29 0 0023 12a29 29 0 00-.46-5.58zM9.75 15.02V8.98L15.5 12l-5.75 3.02z' },
-                    ].filter(Boolean) as {href:string;d:string}[]).map((s,i) => (
-                      <a key={i} href={s.href} target="_blank" rel="noopener noreferrer"
-                        style={{ width:34, height:34, borderRadius:9, background:'rgba(255,255,255,.07)', border:'1px solid rgba(255,255,255,.12)', display:'flex', alignItems:'center', justifyContent:'center', transition:'background .2s, border .2s' }}
-                        onMouseEnter={e=>{(e.currentTarget as HTMLElement).style.background='rgba(175,142,74,.18)';(e.currentTarget as HTMLElement).style.borderColor='rgba(175,142,74,.4)';}}
-                        onMouseLeave={e=>{(e.currentTarget as HTMLElement).style.background='rgba(255,255,255,.07)';(e.currentTarget as HTMLElement).style.borderColor='rgba(255,255,255,.12)';}}>
-                        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="rgba(255,255,255,.6)" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"><path d={s.d}/></svg>
+                    {socialLinks.instagram && (
+                      <a href={socialLinks.instagram} target="_blank" rel="noopener noreferrer" style={{ width:34, height:34, borderRadius:9, background:'rgba(255,255,255,.07)', border:'1px solid rgba(255,255,255,.12)', display:'flex', alignItems:'center', justifyContent:'center', transition:'all 0.3s' }} onMouseEnter={e=>{e.currentTarget.style.background='rgba(255,255,255,.15)'; e.currentTarget.style.color='#E1306C'; e.currentTarget.style.borderColor='rgba(255,255,255,.2)';}} onMouseLeave={e=>{e.currentTarget.style.background='rgba(255,255,255,.07)'; e.currentTarget.style.color='rgba(255,255,255,.6)'; e.currentTarget.style.borderColor='rgba(255,255,255,.12)';}}>
+                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><rect x="2" y="2" width="20" height="20" rx="5" ry="5"></rect><path d="M16 11.37A4 4 0 1 1 12.63 8 4 4 0 0 1 16 11.37z"></path><line x1="17.5" y1="6.5" x2="17.51" y2="6.5"></line></svg>
                       </a>
-                    ))}
+                    )}
+                    {socialLinks.facebook && (
+                      <a href={socialLinks.facebook} target="_blank" rel="noopener noreferrer" style={{ width:34, height:34, borderRadius:9, background:'rgba(255,255,255,.07)', border:'1px solid rgba(255,255,255,.12)', display:'flex', alignItems:'center', justifyContent:'center', transition:'all 0.3s' }} onMouseEnter={e=>{e.currentTarget.style.background='rgba(255,255,255,.15)'; e.currentTarget.style.color='#1877F2'; e.currentTarget.style.borderColor='rgba(255,255,255,.2)';}} onMouseLeave={e=>{e.currentTarget.style.background='rgba(255,255,255,.07)'; e.currentTarget.style.color='rgba(255,255,255,.6)'; e.currentTarget.style.borderColor='rgba(255,255,255,.12)';}}>
+                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M18 2h-3a5 5 0 0 0-5 5v3H7v4h3v8h4v-8h3l1-4h-4V7a1 1 0 0 1 1-1h3z"></path></svg>
+                      </a>
+                    )}
+                    {socialLinks.tiktok && (
+                      <a href={socialLinks.tiktok} target="_blank" rel="noopener noreferrer" style={{ width:34, height:34, borderRadius:9, background:'rgba(255,255,255,.07)', border:'1px solid rgba(255,255,255,.12)', display:'flex', alignItems:'center', justifyContent:'center', transition:'all 0.3s' }} onMouseEnter={e=>{e.currentTarget.style.background='rgba(255,255,255,.15)'; e.currentTarget.style.color='#ffffff'; e.currentTarget.style.borderColor='rgba(255,255,255,.2)';}} onMouseLeave={e=>{e.currentTarget.style.background='rgba(255,255,255,.07)'; e.currentTarget.style.color='rgba(255,255,255,.6)'; e.currentTarget.style.borderColor='rgba(255,255,255,.12)';}}>
+                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M9 12a4 4 0 1 0 4 4V4a5 5 0 0 0 5 5"></path></svg>
+                      </a>
+                    )}
+                    {socialLinks.whatsapp && (
+                      <a href={socialLinks.whatsapp} target="_blank" rel="noopener noreferrer" style={{ width:34, height:34, borderRadius:9, background:'rgba(255,255,255,.07)', border:'1px solid rgba(255,255,255,.12)', display:'flex', alignItems:'center', justifyContent:'center', transition:'all 0.3s' }} onMouseEnter={e=>{e.currentTarget.style.background='rgba(255,255,255,.15)'; e.currentTarget.style.color='#25D366'; e.currentTarget.style.borderColor='rgba(255,255,255,.2)';}} onMouseLeave={e=>{e.currentTarget.style.background='rgba(255,255,255,.07)'; e.currentTarget.style.color='rgba(255,255,255,.6)'; e.currentTarget.style.borderColor='rgba(255,255,255,.12)';}}>
+                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72 12.84 12.84 0 0 0 .7 2.81 2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45 12.84 12.84 0 0 0 2.81.7A2 2 0 0 1 22 16.92z"></path></svg>
+                      </a>
+                    )}
+                    {socialLinks.telegram && (
+                      <a href={socialLinks.telegram} target="_blank" rel="noopener noreferrer" style={{ width:34, height:34, borderRadius:9, background:'rgba(255,255,255,.07)', border:'1px solid rgba(255,255,255,.12)', display:'flex', alignItems:'center', justifyContent:'center', transition:'all 0.3s' }} onMouseEnter={e=>{e.currentTarget.style.background='rgba(255,255,255,.15)'; e.currentTarget.style.color='#24A1DE'; e.currentTarget.style.borderColor='rgba(255,255,255,.2)';}} onMouseLeave={e=>{e.currentTarget.style.background='rgba(255,255,255,.07)'; e.currentTarget.style.color='rgba(255,255,255,.6)'; e.currentTarget.style.borderColor='rgba(255,255,255,.12)';}}>
+                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><polygon points="22 2 15 22 11 13 2 9 22 2"></polygon><line x1="22" y1="2" x2="11" y2="13"></line></svg>
+                      </a>
+                    )}
                   </div>
                 </div>
               )}
@@ -1047,6 +1059,11 @@ export default function LandingPage() {
               {social.whatsapp && (
                 <a href={social.whatsapp} target="_blank" rel="noopener noreferrer" style={{ color:'#AF8E4A', opacity:0.5, transition:'all 0.3s' }} onMouseEnter={e=>{e.currentTarget.style.opacity='1'; e.currentTarget.style.color='#25D366';}} onMouseLeave={e=>{e.currentTarget.style.opacity='0.5'; e.currentTarget.style.color='#AF8E4A';}}>
                   <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72 12.84 12.84 0 0 0 .7 2.81 2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45 12.84 12.84 0 0 0 2.81.7A2 2 0 0 1 22 16.92z"></path></svg>
+                </a>
+              )}
+              {social.telegram && (
+                <a href={social.telegram} target="_blank" rel="noopener noreferrer" style={{ color:'#AF8E4A', opacity:0.5, transition:'all 0.3s' }} onMouseEnter={e=>{e.currentTarget.style.opacity='1'; e.currentTarget.style.color='#24A1DE';}} onMouseLeave={e=>{e.currentTarget.style.opacity='0.5'; e.currentTarget.style.color='#AF8E4A';}}>
+                  <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><polygon points="22 2 15 22 11 13 2 9 22 2"></polygon><line x1="22" y1="2" x2="11" y2="13"></line></svg>
                 </a>
               )}
             </div>
