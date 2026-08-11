@@ -20,7 +20,7 @@ export default function LandingPage() {
   const [windowWidth, setWindowWidth] = useState(1200);
   const [hoveredCard, setHoveredCard] = useState<number|null>(null);
   const [navScrolled, setNavScrolled] = useState(false);
-  const [social, setSocial] = useState({ instagram:'', facebook:'', tiktok:'', whatsapp:'' });
+  const [social, setSocial] = useState({ instagram:'', facebook:'', tiktok:'', whatsapp:'', telegram:'' });
 
   const { itemCount, openCart } = useCart();
 
