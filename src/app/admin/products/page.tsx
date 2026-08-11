@@ -495,10 +495,11 @@ export default function AdminProductsPage() {
                 <>
                   <div onClick={()=>setEmojiOpen(false)} style={{ position:'fixed', inset:0, zIndex:1000 }} />
                   <div style={{
-                    position:'fixed',
+                    position: 'fixed',
                     top: emojiRect.bottom + 6,
-                    left: Math.max(8, emojiRect.left),
-                    right: 8,
+                    left: '50%',
+                    transform: 'translateX(-50%)',
+                    width: 'min(320px, calc(100vw - 32px))',
                     background:'#fff',
                     border:`1px solid ${C.border}`,
                     borderRadius:14,
@@ -506,7 +507,7 @@ export default function AdminProductsPage() {
                     zIndex:1001,
                     boxShadow:'0 12px 32px rgba(0,0,0,.15)',
                     display:'grid',
-                    gridTemplateColumns:'repeat(8,1fr)',
+                    gridTemplateColumns:'repeat(auto-fill, minmax(32px, 1fr))',
                     gap:3,
                   }}>
                     {['🧣','🧕','👗','👘','🛍️','🧥','👛','👜','👝','🎀','💍','💎','👒','🧵','✨','⭐','🌹','💐','🎁','🪡','🌺','🌸','🌿','🎗️','✂️','🪞','💫','🌙','🎽','👑','👟','👠','👡','👢','🥾','🥿','👞','🩴','🫧'].map(em=>(

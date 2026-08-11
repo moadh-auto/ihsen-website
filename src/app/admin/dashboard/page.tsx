@@ -299,7 +299,7 @@ export default function AdminDashboard() {
             </div>
             <div style={{ display:'grid', gridTemplateColumns:`repeat(${isMobile?2:4},1fr)`, gap:10 }}>
               {FEATURED_PRODUCTS.map(p => (
-                <div key={p.id} style={{ background:C.card2, border:`1px solid ${C.border}`, borderRadius:10, padding:'10px 12px', display:'flex', gap:8, alignItems:'center' }}>
+                <div key={p.id} style={{ minWidth: 0, background:C.card2, border:`1px solid ${C.border}`, borderRadius:10, padding:'10px 12px', display:'flex', gap:8, alignItems:'center' }}>
                   <span style={{ fontSize:20 }}>{(p as Record<string,unknown>).emoji as string ?? '🛍️'}</span>
                   <div style={{ minWidth:0 }}>
                     <div style={{ fontSize:11, fontWeight:700, color:C.text, overflow:'hidden', textOverflow:'ellipsis', whiteSpace:'nowrap' }}>{p.nameAr.split('—')[0].trim()}</div>
