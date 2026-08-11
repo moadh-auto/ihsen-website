@@ -3,7 +3,7 @@
 import { useEffect, useState, useRef } from 'react';
 import { useParams, useRouter } from 'next/navigation';
 import Image from 'next/image';
-import { FEATURED_PRODUCTS, CATEGORIES } from '@/lib/constants';
+import { FEATURED_PRODUCTS, CATEGORIES, MAIN_CATEGORIES } from '@/lib/constants';
 import { useCart } from '@/context/CartContext';
 import { supabase, type Product as DbProduct } from '@/lib/supabase';
 
@@ -328,9 +328,9 @@ export default function ProductPage() {
 
         {!isMobile && (
           <div style={{ display: 'flex', alignItems: 'center', gap: '2px', flex: 1, justifyContent: 'center' }}>
-            {CATEGORIES.map(cat => (
+            {MAIN_CATEGORIES.map(cat => (
               <a key={cat.id} href={`/products?cat=${cat.id}`} style={{ display: 'flex', alignItems: 'center', gap: '5px', padding: '7px 13px', borderRadius: '10px', textDecoration: 'none', fontSize: '14px', fontWeight: 700, color: sub, transition: 'all 0.18s' }}>
-                {(cat as Record<string, unknown>).emoji as string ?? ''} {isAr ? cat.ar : cat.fr}
+                {cat.emoji ?? ''} {isAr ? cat.ar : cat.fr}
               </a>
             ))}
           </div>

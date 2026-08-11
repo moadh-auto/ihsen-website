@@ -2,8 +2,10 @@
 import { useEffect, useState, Suspense } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import Image from 'next/image';
-import { FEATURED_PRODUCTS, CATEGORIES, TRUST_BADGES } from '@/lib/constants';
+import { FEATURED_PRODUCTS, MAIN_CATEGORIES, TRUST_BADGES } from '@/lib/constants';
 import { supabase, type Product as DbProduct } from '@/lib/supabase';
+
+type BiCat = { ar: string; fr: string; };
 import { useCart } from '@/context/CartContext';
 
 const BADGE_META = {
@@ -46,6 +48,7 @@ function ProductsContent() {
 
   // Filters
   const [activeCat,     setActiveCat]    = useState('all');
+  const [activeSubCat,  setActiveSubCat] = useState('all');
   const [priceRange,    setPriceRange]   = useState('all');
   const [selColors,     setSelColors]    = useState<string[]>([]);
   const [selBadges,     setSelBadges]    = useState<string[]>([]);
@@ -60,6 +63,10 @@ function ProductsContent() {
   const [dbProducts, setDbProducts] = useState<DbProduct[]>([]);
   const [loading,    setLoading]    = useState(true);
   const [social, setSocial] = useState({ instagram:'', facebook:'', tiktok:'', whatsapp:'', telegram:'' });
+  
+  const [clothingCats, setClothingCats] = useState<BiCat[]>([]);
+  const [shoeCats, setShoeCats] = useState<BiCat[]>([]);
+  const [accessoryCats, setAccessoryCats] = useState<BiCat[]>([]);
 
   // Page loader state machine: 'in' = visible, 'out' = fading, 'gone' = removed
   const [loaderPhase, setLoaderPhase] = useState<'in'|'out'|'gone'>('in');
@@ -78,12 +85,27 @@ function ProductsContent() {
     // Fetch from Supabase with minimum 700ms loader display
     const minDelay = new Promise<void>(r => setTimeout(r, 700));
     const fetchProd = supabase.from('products').select('*').eq('active', true).order('sort_order', { ascending: true });
-    const fetchSoc = supabase.from('site_settings').select('value').eq('key', 'social_links').maybeSingle();
+    const fetchSettings = supabase.from('site_settings').select('key, value').in('key', ['social_links', 'clothing_categories', 'shoe_categories', 'accessory_categories']);
 
-    Promise.all([minDelay, fetchProd, fetchSoc]).then(([, { data: pData }, { data: sData }]) => {
+    Promise.all([minDelay, fetchProd, fetchSettings]).then(([, { data: pData }, { data: sData }]) => {
       if (pData) setDbProducts(pData as DbProduct[]);
-      if (sData?.value) {
-        try { setSocial({ ...social, ...JSON.parse(sData.value) }); } catch {}
+      if (sData) {
+        const soc = sData.find(s => s.key === 'social_links');
+        if (soc?.value) {
+          try { setSocial({ ...social, ...JSON.parse(soc.value) }); } catch {}
+        }
+        const cloth = sData.find(s => s.key === 'clothing_categories');
+        if (cloth?.value) {
+          try { setClothingCats(JSON.parse(cloth.value)); } catch {}
+        }
+        const shoe = sData.find(s => s.key === 'shoe_categories');
+        if (shoe?.value) {
+          try { setShoeCats(JSON.parse(shoe.value)); } catch {}
+        }
+        const acc = sData.find(s => s.key === 'accessory_categories');
+        if (acc?.value) {
+          try { setAccessoryCats(JSON.parse(acc.value)); } catch {}
+        }
       }
       setLoading(false);
       setLoaderPhase('out');
@@ -142,7 +164,16 @@ function ProductsContent() {
 
   const filtered = sourceProducts
     .filter(p => {
-      if (activeCat !== 'all' && p.category !== CAT_ID_TO_AR[activeCat]) return false;
+      if (activeCat !== 'all') {
+        let isMatch = false;
+        if (activeCat === 'clothing') isMatch = clothingCats.some(c => c.ar === p.category);
+        else if (activeCat === 'shoe') isMatch = shoeCats.some(c => c.ar === p.category);
+        else if (activeCat === 'accessory') isMatch = accessoryCats.some(c => c.ar === p.category);
+        if (!isMatch) return false;
+      }
+      if (activeSubCat !== 'all') {
+        if (p.category !== activeSubCat) return false;
+      }
       if (p.price < priceRangeMeta.min || p.price > priceRangeMeta.max) return false;
       if (selColors.length && !selColors.some(c => p.colors.includes(c as never))) return false;
       if (selBadges.length && !selBadges.includes(p.badge ?? '')) return false;
@@ -467,11 +498,11 @@ function ProductsContent() {
 
         <div style={{ flex: 1, minWidth: 0 }}>
           <div data-reveal style={{ display: 'flex', gap: 8, flexWrap: 'wrap', marginBottom: 16, alignItems: 'center' }}>
-            {[{ id: 'all', ar: 'الكل', fr: 'Tous' }, ...CATEGORIES].map(cat => {
+            {[{ id: 'all', ar: 'الكل', fr: 'Tous' }, ...MAIN_CATEGORIES].map(cat => {
               const active = activeCat === cat.id;
               return (
                 <button key={cat.id}
-                  onClick={() => { setActiveCat(cat.id); router.replace(`/products${cat.id !== 'all' ? `?cat=${cat.id}` : ''}`, { scroll: false }); }}
+                  onClick={() => { setActiveCat(cat.id); setActiveSubCat('all'); router.replace(`/products${cat.id !== 'all' ? `?cat=${cat.id}` : ''}`, { scroll: false }); }}
                   style={{
                     padding: isMobile ? '7px 14px' : '8px 20px', borderRadius: 100,
                     border: active ? 'none' : `1.5px solid ${C.border}`,
@@ -485,7 +516,7 @@ function ProductsContent() {
                 </button>
               );
             })}
-
+            
             {!isDesktop && (
               <button onClick={() => setDrawerOpen(true)} style={{
                 marginInlineStart: 'auto',
@@ -508,6 +539,28 @@ function ProductsContent() {
               </button>
             )}
           </div>
+
+          {activeCat !== 'all' && (
+            <div data-reveal style={{ display: 'flex', gap: 6, flexWrap: 'wrap', marginBottom: 16, alignItems: 'center' }}>
+              {[{ ar: 'الكل', fr: 'Tous' }, ...(activeCat === 'clothing' ? clothingCats : activeCat === 'shoe' ? shoeCats : accessoryCats)].map((scat, i) => {
+                const active = activeSubCat === scat.ar || (scat.ar === 'الكل' && activeSubCat === 'all');
+                return (
+                  <button key={i}
+                    onClick={() => setActiveSubCat(scat.ar === 'الكل' ? 'all' : scat.ar)}
+                    style={{
+                      padding: '4px 12px', borderRadius: 100,
+                      border: `1px solid ${active ? C.gold : C.border}`,
+                      background: active ? `${C.gold}15` : 'transparent',
+                      color: active ? C.gold : C.muted,
+                      fontSize: 11, fontWeight: active ? 700 : 500,
+                      cursor: 'pointer', fontFamily: font, transition: 'all .2s',
+                    }}>
+                    {isAr ? scat.ar : scat.fr}
+                  </button>
+                );
+              })}
+            </div>
+          )}
 
           {(activeFilterCount > 0 || search) && (
             <div style={{ display: 'flex', flexWrap: 'wrap', gap: 6, marginBottom: 16 }}>

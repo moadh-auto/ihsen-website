@@ -2,7 +2,7 @@
 import { useEffect, useState, useRef } from 'react';
 import { useRouter } from 'next/navigation';
 import Image from 'next/image';
-import { TRUST_BADGES, FEATURED_PRODUCTS, CATEGORIES } from '@/lib/constants';
+import { TRUST_BADGES, FEATURED_PRODUCTS, MAIN_CATEGORIES } from '@/lib/constants';
 import { supabase, type Product as DbProduct } from '@/lib/supabase';
 import { useCart } from '@/context/CartContext';
 
@@ -604,7 +604,7 @@ export default function LandingPage() {
 
           {/* Category quick-links */}
           <div data-reveal="prod-cats" style={{ display:'flex', gap:8, flexWrap:'wrap', justifyContent:'center', marginBottom: isMobile?28:40, ...rv('prod-cats','up',120) }}>
-            {CATEGORIES.map(cat => (
+            {MAIN_CATEGORIES.map(cat => (
               <button key={cat.id} onClick={() => router.push(`/products?cat=${cat.id}`)} style={{
                 background:'transparent', border:`1.5px solid ${C.border}`, borderRadius:100,
                 padding: isMobile?'7px 16px':'8px 20px',

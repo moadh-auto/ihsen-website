@@ -8,6 +8,12 @@ export const COLORS = {
 } as const;
 
 // ── Categories ────────────────────────────────────────────
+export const MAIN_CATEGORIES = [
+  { id: 'clothing',  ar: 'ملابس',     fr: 'Vêtements',   emoji: '👗' },
+  { id: 'shoe',      ar: 'أحذية',     fr: 'Chaussures',  emoji: '🥿' },
+  { id: 'accessory', ar: 'إكسسوارات', fr: 'Accessoires', emoji: '👜' },
+] as const;
+
 export const CATEGORIES = [
   { id: 'foulard',  ar: 'فولار',   fr: 'Foulards', count: 48 },
   { id: 'hijab',    ar: 'حجاب',    fr: 'Hijabs',   count: 62 },
